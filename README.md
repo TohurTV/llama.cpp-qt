@@ -20,15 +20,19 @@ To build and run the LLama.cpp-QT Wrapper, follow these steps:
 1. Clone this repository to your local machine:
    ```sh
    git clone https://github.com/your-username/llama-cpp-wrapper.git
-
+   ```
 2. Change your current directory to the cloned repository:
    ```sh
    cd llama-cpp-wrapper
-
-3. Run the build for your platform:
-   for AMD GPUs run
+   ```
+3. Run the build for your platform:for AMD GPUs run
    ```sh
    sh ./build-rocm.sh
+   ```
+   Cuda = build-cuda.sh and cpu only build is build-cpu.sh
+
+
 4. Run llama.cpp-qt
    ```sh
    ./llama.cpp-qt
+   ```
