@@ -12,7 +12,7 @@ Before you begin, ensure you have met the following requirements:
 - **Python 3.6 or higher:** You can download it from the [official Python website](https://www.python.org/downloads/).
 - **pyqt5 or Python-AnyQT**
 - **Python flask and requests:** Required for the OpenAI like api wrapper.
-- **llama.cpp requirements:**You can learn the requirements for CPU,Cuda, or AMD rocm builds here, [Llama.cpp Github](https://github.com/ggerganov/llama.cpp).
+- **llama.cpp requirements:** You can learn the requirements for CPU,Cuda, or AMD rocm builds here, [Llama.cpp Github](https://github.com/ggerganov/llama.cpp).
 ## Build
 
 To build and run the LLama.cpp Server Wrapper, follow these steps:
