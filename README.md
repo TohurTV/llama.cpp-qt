@@ -1,6 +1,6 @@
 # llama.cpp-qt
 
-![Python Version](https://img.shields.io/badge/python-3.6%2B-blue.svg)
+![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)
 
 This repository contains a Python-based graphical wrapper for the LLama.cpp server, providing a user-friendly interface
 for configuring and running the server. LLama.cpp is a lightweight implementation of GPT-like models.
@@ -9,7 +9,7 @@ for configuring and running the server. LLama.cpp is a lightweight implementatio
 
 Before you begin, ensure you have met the following requirements:
 
-- **Python 3.6 or higher:** You can download it from the [official Python website](https://www.python.org/downloads/).
+- **Python 3.10 or higher:** You can download it from the [official Python website](https://www.python.org/downloads/).
 - **pyqt5 or Python-AnyQT**
 - **Python flask and requests:** Required for the OpenAI like api wrapper.
 - **llama.cpp requirements:** You can learn the requirements for CPU,Cuda, or AMD rocm builds here, [Llama.cpp Github](https://github.com/ggerganov/llama.cpp).
