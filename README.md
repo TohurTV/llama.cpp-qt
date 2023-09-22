@@ -15,7 +15,7 @@ Before you begin, ensure you have met the following requirements:
 - **llama.cpp requirements:** You can learn the requirements for CPU,Cuda, or AMD rocm builds here, [Llama.cpp Github](https://github.com/ggerganov/llama.cpp).
 ## Build
 
-To build and run the LLama.cpp Server Wrapper, follow these steps:
+To build and run the LLama.cpp-QT Wrapper, follow these steps:
 
 1. Clone this repository to your local machine:
    ```sh
