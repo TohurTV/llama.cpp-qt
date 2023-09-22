@@ -41,7 +41,7 @@ To build and run the LLama.cpp-QT Wrapper, follow these steps:
 
 ## Systemwide installation
 
-To install systemwide run:
+To install systemwide after running the build script run:
 
 ```sh
 sh ./install.sh
