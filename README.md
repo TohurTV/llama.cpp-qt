@@ -2,7 +2,7 @@
 
 ![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)
 
-This repository contains a Python-based graphical wrapper for the LLama.cpp server, providing a user-friendly interface
+Llama.cpp-qt is a Python-based graphical wrapper for the LLama.cpp server, providing a user-friendly interface
 for configuring and running the server. LLama.cpp is a lightweight implementation of GPT-like models.
 
 ## Requirements
