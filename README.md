@@ -29,7 +29,7 @@ To build and run the LLama.cpp-QT Wrapper, follow these steps:
    ```sh
    sh ./build-rocm.sh
    ```
-   Cuda = build-cuda.sh and cpu only build is build-cpu.sh
+   Cuda is build-cuda.sh and cpu only build is build-cpu.sh
 
 
 4. Run llama.cpp-qt
