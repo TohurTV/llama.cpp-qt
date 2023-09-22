@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Check if llama.cpp-qt.py exists in the current directory
+if [ -f "./llama.cpp-qt.py" ]; then
+    python3 ./llama.cpp-qt.py "$@"
+    exit $?
+fi
+
+# Check if llama.cpp-qt.py exists in /opt/llama.cpp-qt
+if [ -f "/opt/llama.cpp-qt/llama.cpp-qt.py" ]; then
+    python3 /opt/llama.cpp-qt/llama.cpp-qt.py "$@"
+    exit $?
+fi
+
+# If llama.cpp-qt.py is not found, display an error message
+echo "Error: llama.cpp-qt.py not found in the current directory or /opt/llama.cpp-qt"
+exit 1
