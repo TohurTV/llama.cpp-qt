@@ -1,1 +1,1 @@
-# llama.cpp-server-wrapper
+# llama.cpp-qt
