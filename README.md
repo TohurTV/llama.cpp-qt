@@ -17,7 +17,7 @@ Before you begin, ensure you have met the following requirements:
 
 ## Build
 
-To build and run the LLama.cpp-QT Wrapper, follow these steps:
+To build and run the LLama.cpp-qt Wrapper, follow these steps:
 
 1. Clone this repository to your local machine:
    ```sh
