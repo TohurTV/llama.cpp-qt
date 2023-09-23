@@ -46,6 +46,7 @@ Icon=$INSTALL_DIR/llama.png
 Terminal=false
 Type=Application
 Categories=Utility;
+StartupNotify=true
 EOF
 
 # Set proper permissions for the desktop shortcut
