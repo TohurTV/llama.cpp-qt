@@ -99,7 +99,7 @@ class LlamaServerWrapper(QMainWindow):
         self.model_settings_layout.addWidget(self.model_chooser)
 
         # Add some vertical space between Model Selection and GPU Layers
-        self.model_settings_layout.addSpacing(10)
+
 
         self.row1_layout = QHBoxLayout()  # Create a QHBoxLayout for GPU Layers
         self.gpu_layers_label = QLabel('GPU Layers:', self)
@@ -111,7 +111,7 @@ class LlamaServerWrapper(QMainWindow):
         self.model_settings_layout.addLayout(self.row1_layout)
 
         # Add some vertical space between GPU Layers and Threads
-        self.model_settings_layout.addSpacing(10)
+
 
         self.row2_layout = QHBoxLayout()  # Create a QHBoxLayout for Threads
         self.threads_label = QLabel('Threads:', self)
@@ -123,7 +123,6 @@ class LlamaServerWrapper(QMainWindow):
         self.model_settings_layout.addLayout(self.row2_layout)
 
         # Add some vertical space between Threads and Context Size
-        self.model_settings_layout.addSpacing(10)
 
         self.row3_layout = QHBoxLayout()  # Create a QHBoxLayout for Context Size
         self.ctx_size_label = QLabel('Context Size:', self)
@@ -134,7 +133,6 @@ class LlamaServerWrapper(QMainWindow):
         self.row3_layout.addWidget(self.ctx_size_entry)
         self.model_settings_layout.addLayout(self.row3_layout)
 
-        self.model_settings_layout.addSpacing(10)
 
         self.row4_layout = QHBoxLayout()  # Create a QHBoxLayout for Context Size
         self.bth_size_label = QLabel('Batch Size:', self)
@@ -146,7 +144,6 @@ class LlamaServerWrapper(QMainWindow):
         self.model_settings_layout.addLayout(self.row4_layout)
 
         # Add some vertical space between Context Size and MLock checkbox
-        self.model_settings_layout.addSpacing(10)
 
         # Checkbox for the --mlock option
         self.mlock_checkbox = QCheckBox('Lock memory (mlock)', self)
@@ -224,6 +221,7 @@ class LlamaServerWrapper(QMainWindow):
         bth_size = str(self.bth_size_entry.value())
         host = self.host_entry.text()
         port = str(self.port_entry.value())
+        oaiport = str(self.port_entry.value())
         mlock = "--mlock" if self.mlock_checkbox.isChecked() else ""
 
         if not model_path:
@@ -241,7 +239,7 @@ class LlamaServerWrapper(QMainWindow):
             mlock  # Include --mlock if the checkbox is checked
         ]
 
-        self.save_settings(model_path, gpu_layers, threads, ctx_size, bth_size, mlock)
+        self.save_settings(model_path, gpu_layers, threads, ctx_size, bth_size, mlock, host, port, oaiport)
 
         self.server_runner = ServerRunner(cmd)
         self.server_runner.started.connect(self.on_server_started)
@@ -340,7 +338,7 @@ class LlamaServerWrapper(QMainWindow):
 
     def load_settings(self):
         config = configparser.ConfigParser()
-        config_file = os.path.join(os.path.expanduser("~"), ".config", "llama_server_settings.ini")
+        config_file = os.path.join(os.path.expanduser("~"), ".config", "llama_qt_settings.ini")
         if os.path.exists(config_file):
             config.read(config_file)
             if config.has_section("Settings"):
@@ -351,6 +349,8 @@ class LlamaServerWrapper(QMainWindow):
                 bth_size = config.get("Settings", "bth_size")
                 host = config.get("Settings", "host")  # Load host setting
                 port = config.get("Settings", "port")  # Load port setting
+                oai = config.get("Settings", "oai")  # Load openai setting
+                oaiport = config.get("Settings", "oaiport")  # Load port setting
                 mlock = config.get("Settings", "mlock")  # Load mlock setting
                 self.model_chooser.model_entry.setText(model_path)
                 self.gpu_layers_entry.setValue(int(gpu_layers))
@@ -359,11 +359,13 @@ class LlamaServerWrapper(QMainWindow):
                 self.bth_size_entry.setValue(int(bth_size))
                 self.port_entry.setValue(int(port))
                 self.host_entry.setText(host)
+                self.oai_checkbox.setChecked(oai == "True")  # Set checkbox state
+                self.oaiport_entry.setValue(int(oaiport))
                 self.mlock_checkbox.setChecked(mlock == "True")  # Set checkbox state
 
-    def save_settings(self, model_path, gpu_layers, threads, ctx_size, bth_size, mlock):
+    def save_settings(self, model_path, gpu_layers, threads, ctx_size, bth_size, mlock, host, port, oaiport):
         config = configparser.ConfigParser()
-        config_file = os.path.join(os.path.expanduser("~"), ".config", "llama_server_settings.ini")
+        config_file = os.path.join(os.path.expanduser("~"), ".config", "llama_qt_settings.ini")
         if not config.has_section("Settings"):
             config.add_section("Settings")
         config.set("Settings", "model_path", model_path)
@@ -373,6 +375,8 @@ class LlamaServerWrapper(QMainWindow):
         config.set("Settings", "bth_size", bth_size)
         config.set("Settings", "host", self.host_entry.text())  # Save host setting
         config.set("Settings", "port", str(self.port_entry.value()))  # Save port setting as string
+        config.set("Settings", "oai", str(self.oai_checkbox.isChecked()))  # Save openai setting as string
+        config.set("Settings", "oaiport", str(self.oaiport_entry.value()))  # Save port setting as string
         config.set("Settings", "mlock", str(self.mlock_checkbox.isChecked()))  # Save mlock setting as string
         with open(config_file, "w") as configfile:
             config.write(configfile)
