@@ -5,11 +5,11 @@ INSTALL_DIR="/opt/llama.cpp-qt"
 BIN_DIR="/usr/bin"
 DESKTOP_DIR="/usr/share/applications"
 
-# Check if the script is run as root (sudo)
-if [[ $EUID -ne 0 ]]; then
-    echo "This script must be run as root. Please use sudo."
-    exit 1
-fi
+# # Check if the script is run as root (sudo)
+# if [[ $EUID -ne 0 ]]; then
+#     echo "This script must be run as root. Please use sudo."
+#     exit 1
+# fi
 
 # Ask for the sudo password
 echo "Please enter your sudo password:"
@@ -38,6 +38,7 @@ sudo chmod 755 "$BIN_DIR/llama.cpp-qt"
 echo "Creating desktop shortcut..."
 cat <<EOF | sudo tee "$DESKTOP_DIR/llama-cpp-qt.desktop" > /dev/null
 [Desktop Entry]
+Path=$INSTALL_DIR
 Name=LLama.cpp-Qt
 Comment=LLama.cpp Server Wrapper
 Exec=llama.cpp-qt
