@@ -143,11 +143,11 @@ class LlamaServerWrapper(QMainWindow):
         self.row4_layout.addWidget(self.bth_size_entry)
         self.model_settings_layout.addLayout(self.row4_layout)
 
-        # Add some vertical space between Context Size and MLock checkbox
-
         # Checkbox for the --mlock option
+        self.row5_layout = QHBoxLayout()  # Create a QHBoxLayout for Context Size
         self.mlock_checkbox = QCheckBox('Lock memory (mlock)', self)
-        self.model_settings_layout.addWidget(self.mlock_checkbox)  # Add checkbox to layout
+        self.row5_layout.addWidget(self.mlock_checkbox)
+        self.model_settings_layout.addLayout(self.row5_layout)
 
         # Add stretch to push all content to the top and leave any remaining space at the bottom
         self.model_settings_layout.addStretch()
@@ -236,6 +236,7 @@ class LlamaServerWrapper(QMainWindow):
             "--batch-size", bth_size,
             "--host", host,  # Add host argument
             "--port", port,  # Add port argument
+            "--path", "./public",
             mlock  # Include --mlock if the checkbox is checked
         ]
 
