@@ -230,7 +230,7 @@ class LlamaServerWrapper(QMainWindow):
         bth_size = str(self.bth_size_entry.value())
         host = self.host_entry.text()
         port = str(self.port_entry.value())
-        oaiport = str(self.port_entry.value())
+        oaiport = str(self.oaiport_entry.value())
         mlock = "--mlock" if self.mlock_checkbox.isChecked() else ""
         lowvram = "--low-vram" if self.lowvram_checkbox.isChecked() else ""
 
@@ -295,9 +295,10 @@ class LlamaServerWrapper(QMainWindow):
         # Delay for a specified time (in seconds) before starting the API script
         api_delay = 10  # Set the delay time in seconds (adjust as needed)
         time.sleep(api_delay)
-
+        host = self.host_entry.text()
+        oaiport = str(self.oaiport_entry.value())
         # Start the api_like_OAI.py script as a separate process
-        self.api_process = subprocess.Popen(["python3", "api_like_OAI.py"], stdout=subprocess.PIPE,
+        self.api_process = subprocess.Popen(["python3", "api_like_OAI.py", "--host", host, "--port", oaiport], stdout=subprocess.PIPE,
                                             stderr=subprocess.STDOUT, universal_newlines=True)
 
         while True:
