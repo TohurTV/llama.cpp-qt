@@ -87,13 +87,15 @@ class LlamaServerWrapper(QMainWindow):
         self.tab_widget = QTabWidget(self)
 
         self.model_tab = QWidget()
+        self.lora_tab = QWidget()
         self.server_tab = QWidget()
 
         self.tab_widget.addTab(self.model_tab, "Model Settings")
+        self.tab_widget.addTab(self.lora_tab, "Lora Settings")
         self.tab_widget.addTab(self.server_tab, "Server Settings")
 
         self.setCentralWidget(self.tab_widget)
-
+        self.tab_widget.tabBarClicked.connect(self.handle_tabbar_clicked)
         # Model Settings Tab
         self.model_layout = QVBoxLayout()
         self.model_tab.setLayout(self.model_layout)
@@ -157,6 +159,17 @@ class LlamaServerWrapper(QMainWindow):
         self.model_settings_layout.addStretch()
 
         self.model_layout.addLayout(self.model_settings_layout)
+
+        # Lora Settings Tab
+        self.lora_layout = QVBoxLayout()
+        self.lora_tab.setLayout(self.lora_layout)
+
+        self.lora_settings_layout = QVBoxLayout()  # Use QVBoxLayout for the entire tab
+
+        # Add stretch to push all content to the top and leave any remaining space at the bottom
+        self.lora_settings_layout.addStretch()
+
+        self.lora_layout.addLayout(self.lora_settings_layout)
 
         # Server Settings Tab
         self.server_layout = QVBoxLayout()
@@ -258,11 +271,13 @@ class LlamaServerWrapper(QMainWindow):
         self.server_runner_thread = threading.Thread(target=self.server_runner.run_server)
         self.server_runner_thread.start()
 
-        self.save0 = self.tab_widget.widget(0)
-        self.save1 = self.tab_widget.widget(1)
+        self.save_model_tab = self.tab_widget.widget(0)
+        self.save_lora_tab = self.tab_widget.widget(1)
+        self.save_server_tab = self.tab_widget.widget(2)
         self.tab_widget.removeTab(0)
-        self.tab_widget.insertTab(0, self.save0, 'Server Output')
-        self.tab_widget.removeTab(1)
+        self.tab_widget.insertTab(0, self.save_model_tab, 'Server Output')
+        self.tab_widget.setTabVisible(1, 0)
+        self.tab_widget.setTabVisible(2, 0)
         self.model_chooser.hide()
         self.gpu_layers_label.hide()
         self.gpu_layers_entry.hide()
@@ -318,9 +333,11 @@ class LlamaServerWrapper(QMainWindow):
         self.server_runner_thread.join()
         self.server_runner_thread = None
 
+        self.tab_widget.setTabVisible(1, 1)
+        self.tab_widget.setTabVisible(2, 1)
         self.tab_widget.removeTab(0)
-        self.tab_widget.insertTab(0, self.save0, 'Model Settings')
-        self.tab_widget.insertTab(1, self.save1, 'Server Settings')
+        self.tab_widget.insertTab(0, self.save_model_tab, 'Model Settings')
+        self.tab_widget.setCurrentIndex(0)
         self.output_text.hide()
         self.stop_button.hide()
         self.model_chooser.show()
@@ -426,6 +443,11 @@ class LlamaServerWrapper(QMainWindow):
         config.set("Settings", "lowvram", str(self.lowvram_checkbox.isChecked()))  # Save mlock setting as string
         with open(config_file, "w") as configfile:
             config.write(configfile)
+
+    def handle_tabbar_clicked(self, index):
+        print(index)
+
+        print("x2:", index * 2)
 
 
 def main():
