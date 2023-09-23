@@ -64,6 +64,51 @@ class ModelChooser(QWidget):
         if model_path:
             self.model_entry.setText(model_path)
 
+class LoraChooser(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.layout = QHBoxLayout()
+        self.lora_entry = QLineEdit()
+        self.lora_entry.setPlaceholderText('Select Lora...')
+        self.lora_button = QPushButton('Select Lora', self)
+        self.lora_button.clicked.connect(self.select_lora)
+
+        self.layout.addWidget(self.lora_entry)
+        self.layout.addWidget(self.lora_button)
+        self.setLayout(self.layout)
+
+    def select_lora(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.ReadOnly
+        file_dialog = QFileDialog()
+        file_dialog.setNameFilter('Lora Files (*.gguf);;All Files (*)')
+        lora_path, _ = file_dialog.getOpenFileName(self, 'Select Lora', '', options=options)
+        if lora_path:
+            self.lora_entry.setText(lora_path)
+
+class LoraBaseChooser(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.layout = QHBoxLayout()
+        self.lorabase_entry = QLineEdit()
+        self.lorabase_entry.setPlaceholderText('Select Lora Base...')
+        self.lorabase_button = QPushButton('Select Lora Base', self)
+        self.lorabase_button.clicked.connect(self.select_lorabase)
+
+        self.layout.addWidget(self.lorabase_entry)
+        self.layout.addWidget(self.lorabase_button)
+        self.setLayout(self.layout)
+
+    def select_lorabase(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.ReadOnly
+        file_dialog = QFileDialog()
+        file_dialog.setNameFilter('Lora Base Files (*.gguf);;All Files (*)')
+        lorabase_path, _ = file_dialog.getOpenFileName(self, 'Select Lora Base', '', options=options)
+        if lorabase_path:
+            self.lorabase_entry.setText(lorabase_path)
 
 class LlamaServerWrapper(QMainWindow):
     # checking if the config directory
@@ -165,6 +210,15 @@ class LlamaServerWrapper(QMainWindow):
         self.lora_tab.setLayout(self.lora_layout)
 
         self.lora_settings_layout = QVBoxLayout()  # Use QVBoxLayout for the entire tab
+        self.lora_chooser = LoraChooser()
+        self.lora_chooser.layout.setAlignment(Qt.AlignTop)
+
+        self.lora_settings_layout.addWidget(self.lora_chooser)
+
+        self.lorabase_chooser = LoraBaseChooser()
+        self.lorabase_chooser.layout.setAlignment(Qt.AlignTop)
+
+        self.lora_settings_layout.addWidget(self.lorabase_chooser)
 
         # Add stretch to push all content to the top and leave any remaining space at the bottom
         self.lora_settings_layout.addStretch()
@@ -235,11 +289,13 @@ class LlamaServerWrapper(QMainWindow):
         threads = str(self.threads_entry.value())
         ctx_size = str(self.ctx_size_entry.value())
         bth_size = str(self.bth_size_entry.value())
+        mlock = "--mlock" if self.mlock_checkbox.isChecked() else ""
+        lowvram = "--low-vram" if self.lowvram_checkbox.isChecked() else ""
+        lora_path = self.lora_chooser.lora_entry.text()
+        lorabase_path = self.lorabase_chooser.lorabase_entry.text()
         host = self.host_entry.text()
         port = str(self.port_entry.value())
         oaiport = str(self.oaiport_entry.value())
-        mlock = "--mlock" if self.mlock_checkbox.isChecked() else ""
-        lowvram = "--low-vram" if self.lowvram_checkbox.isChecked() else ""
 
         if not model_path:
             return
@@ -261,7 +317,7 @@ class LlamaServerWrapper(QMainWindow):
         if self.lowvram_checkbox.isChecked():
             cmd.append("--low-vram")
 
-        self.save_settings(model_path, gpu_layers, threads, ctx_size, bth_size, mlock, lowvram, host, port, oaiport)
+        self.save_settings(model_path, gpu_layers, threads, ctx_size, bth_size, mlock, lowvram, lora_path, lorabase_path, host, port, oaiport)
 
         self.server_runner = ServerRunner(cmd)
         self.server_runner.started.connect(self.on_server_started)
@@ -401,6 +457,22 @@ class LlamaServerWrapper(QMainWindow):
                     bth_size = config.get("Settings", "bth_size")
                     self.bth_size_entry.setValue(int(bth_size))
 
+                if config.has_option("Settings", "mlock"):
+                    mlock = config.get("Settings", "mlock")  # Load mlock setting
+                    self.mlock_checkbox.setChecked(mlock == "True")  # Set checkbox state
+
+                if config.has_option("Settings", "lowvram"):
+                    lowvram = config.get("Settings", "lowvram")  # Load lowvram setting
+                    self.lowvram_checkbox.setChecked(lowvram == "True")  # Set checkbox state
+
+                if config.has_option("Settings", "lora_path"):
+                    lora_path = config.get("Settings", "lora_path")
+                    self.lora_chooser.lora_entry.setText(lora_path)
+
+                if config.has_option("Settings", "lorabase_path"):
+                    lorabase_path = config.get("Settings", "lorabase_path")
+                    self.lorabase_chooser.lorabase_entry.setText(lorabase_path)
+
                 if config.has_option("Settings", "host"):
                     host = config.get("Settings", "host")  # Load host setting
                     self.host_entry.setText(host)
@@ -417,15 +489,7 @@ class LlamaServerWrapper(QMainWindow):
                     oaiport = config.get("Settings", "oaiport")  # Load port setting
                     self.oaiport_entry.setValue(int(oaiport))
 
-                if config.has_option("Settings", "mlock"):
-                    mlock = config.get("Settings", "mlock")  # Load mlock setting
-                    self.mlock_checkbox.setChecked(mlock == "True")  # Set checkbox state
-
-                if config.has_option("Settings", "lowvram"):
-                    lowvram = config.get("Settings", "lowvram")  # Load lowvram setting
-                    self.lowvram_checkbox.setChecked(lowvram == "True")  # Set checkbox state
-
-    def save_settings(self, model_path, gpu_layers, threads, ctx_size, bth_size, mlock, lowvram, host, port, oaiport):
+    def save_settings(self, model_path, gpu_layers, threads, ctx_size, bth_size, mlock, lowvram, lora_path, lorabase_path, host, port, oaiport):
         config = configparser.ConfigParser()
         config_file = os.path.join(os.path.expanduser("~"), ".config", "llama.cpp-qt", "settings.ini")
         if not config.has_section("Settings"):
@@ -435,12 +499,14 @@ class LlamaServerWrapper(QMainWindow):
         config.set("Settings", "threads", threads)
         config.set("Settings", "ctx_size", ctx_size)
         config.set("Settings", "bth_size", bth_size)
+        config.set("Settings", "mlock", str(self.mlock_checkbox.isChecked()))  # Save mlock setting as string
+        config.set("Settings", "lowvram", str(self.lowvram_checkbox.isChecked()))  # Save lowvram setting as string
+        config.set("Settings", "lora_path", lora_path)
+        config.set("Settings", "lorabase_path", lorabase_path)
         config.set("Settings", "host", self.host_entry.text())  # Save host setting
         config.set("Settings", "port", str(self.port_entry.value()))  # Save port setting as string
         config.set("Settings", "oai", str(self.oai_checkbox.isChecked()))  # Save openai setting as string
         config.set("Settings", "oaiport", str(self.oaiport_entry.value()))  # Save port setting as string
-        config.set("Settings", "mlock", str(self.mlock_checkbox.isChecked()))  # Save mlock setting as string
-        config.set("Settings", "lowvram", str(self.lowvram_checkbox.isChecked()))  # Save mlock setting as string
         with open(config_file, "w") as configfile:
             config.write(configfile)
 
