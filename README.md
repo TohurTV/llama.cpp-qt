@@ -10,7 +10,7 @@ for configuring and running the server. LLama.cpp is a lightweight implementatio
 Before you begin, ensure you have met the following requirements:
 
 - **Python 3.10 or higher:** You can download it from the [official Python website](https://www.python.org/downloads/) or your Linux distribution's repositories.
-- **pyqt5 or Python-AnyQT**
+- **pyqt5 or Python-AnyQT and QT 5:** For the GUI.
 - **Python flask and requests:** Required for the OpenAI like api wrapper.
 - **llama.cpp requirements:** You can learn the requirements for CPU,Cuda, or AMD rocm builds
   here, [Llama.cpp Github](https://github.com/ggerganov/llama.cpp).
