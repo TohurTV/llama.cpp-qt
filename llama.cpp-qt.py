@@ -6,7 +6,7 @@ import os
 import re
 import time  # Import the time module
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QFileDialog, QSpinBox, QVBoxLayout, QWidget, \
-    QLineEdit, QHBoxLayout, QPlainTextEdit, QCheckBox, QTabWidget, QWidget
+    QLineEdit, QHBoxLayout, QPlainTextEdit, QCheckBox, QTabWidget, QWidget, QFormLayout
 from PyQt5.QtCore import Qt, pyqtSignal, QObject
 import configparser
 
@@ -91,36 +91,77 @@ class LlamaServerWrapper(QMainWindow):
         self.model_layout = QVBoxLayout()
         self.model_tab.setLayout(self.model_layout)
 
+        self.model_settings_layout = QVBoxLayout()  # Use QVBoxLayout for the entire tab
+
         self.model_chooser = ModelChooser()
         self.model_chooser.layout.setAlignment(Qt.AlignTop)
 
-        self.model_layout.addWidget(self.model_chooser)
+        self.model_settings_layout.addWidget(self.model_chooser)
 
+        # Add some vertical space between Model Selection and GPU Layers
+        self.model_settings_layout.addSpacing(10)
+
+        self.row1_layout = QHBoxLayout()  # Create a QHBoxLayout for GPU Layers
         self.gpu_layers_label = QLabel('GPU Layers:', self)
         self.gpu_layers_entry = QSpinBox(self)
         self.gpu_layers_entry.setMinimum(1)
         self.gpu_layers_entry.setMaximum(100)
+        self.row1_layout.addWidget(self.gpu_layers_label)
+        self.row1_layout.addWidget(self.gpu_layers_entry)
+        self.model_settings_layout.addLayout(self.row1_layout)
 
+        # Add some vertical space between GPU Layers and Threads
+        self.model_settings_layout.addSpacing(10)
+
+        self.row2_layout = QHBoxLayout()  # Create a QHBoxLayout for Threads
         self.threads_label = QLabel('Threads:', self)
         self.threads_entry = QSpinBox(self)
         self.threads_entry.setMinimum(1)
         self.threads_entry.setMaximum(100)
+        self.row2_layout.addWidget(self.threads_label)
+        self.row2_layout.addWidget(self.threads_entry)
+        self.model_settings_layout.addLayout(self.row2_layout)
 
+        # Add some vertical space between Threads and Context Size
+        self.model_settings_layout.addSpacing(10)
+
+        self.row3_layout = QHBoxLayout()  # Create a QHBoxLayout for Context Size
         self.ctx_size_label = QLabel('Context Size:', self)
         self.ctx_size_entry = QSpinBox(self)
         self.ctx_size_entry.setMinimum(1)
         self.ctx_size_entry.setMaximum(10000)
+        self.row3_layout.addWidget(self.ctx_size_label)
+        self.row3_layout.addWidget(self.ctx_size_entry)
+        self.model_settings_layout.addLayout(self.row3_layout)
 
-        self.model_layout.addWidget(self.gpu_layers_label)
-        self.model_layout.addWidget(self.gpu_layers_entry)
-        self.model_layout.addWidget(self.threads_label)
-        self.model_layout.addWidget(self.threads_entry)
-        self.model_layout.addWidget(self.ctx_size_label)
-        self.model_layout.addWidget(self.ctx_size_entry)
+        self.model_settings_layout.addSpacing(10)
+
+        self.row4_layout = QHBoxLayout()  # Create a QHBoxLayout for Context Size
+        self.bth_size_label = QLabel('Batch Size:', self)
+        self.bth_size_entry = QSpinBox(self)
+        self.bth_size_entry.setMinimum(1)
+        self.bth_size_entry.setMaximum(10000)
+        self.row4_layout.addWidget(self.bth_size_label)
+        self.row4_layout.addWidget(self.bth_size_entry)
+        self.model_settings_layout.addLayout(self.row4_layout)
+
+        # Add some vertical space between Context Size and MLock checkbox
+        self.model_settings_layout.addSpacing(10)
+
+        # Checkbox for the --mlock option
+        self.mlock_checkbox = QCheckBox('Lock memory (mlock)', self)
+        self.model_settings_layout.addWidget(self.mlock_checkbox)  # Add checkbox to layout
+
+        # Add stretch to push all content to the top and leave any remaining space at the bottom
+        self.model_settings_layout.addStretch()
+
+        self.model_layout.addLayout(self.model_settings_layout)
 
         # Server Settings Tab
         self.server_layout = QVBoxLayout()
         self.server_tab.setLayout(self.server_layout)
+
+        self.server_settings_layout = QVBoxLayout()  # Use QVBoxLayout for the entire tab
 
         self.host_label = QLabel('Server Host:', self)
         self.host_entry = QLineEdit(self)
@@ -133,16 +174,28 @@ class LlamaServerWrapper(QMainWindow):
         self.port_entry.setMaximum(65535)
         self.port_entry.setValue(8080)  # Set default port value
 
-        self.host_layout = QHBoxLayout()
-        self.host_layout.addWidget(self.host_label)
-        self.host_layout.addWidget(self.host_entry)
+        self.server_settings_layout.addWidget(self.host_label)
+        self.server_settings_layout.addWidget(self.host_entry)
+        self.server_settings_layout.addWidget(self.port_label)
+        self.server_settings_layout.addWidget(self.port_entry)
 
-        self.port_layout = QHBoxLayout()
-        self.port_layout.addWidget(self.port_label)
-        self.port_layout.addWidget(self.port_entry)
+        # Checkbox for the OpenAI compatible wrapper
+        self.oai_checkbox = QCheckBox('Use OpenAI compatible wrapper', self)
 
-        self.server_layout.addLayout(self.host_layout)
-        self.server_layout.addLayout(self.port_layout)
+        self.oaiport_label = QLabel('OpenAI Server Port:', self)
+        self.oaiport_entry = QSpinBox(self)
+        self.oaiport_entry.setMinimum(1)
+        self.oaiport_entry.setMaximum(65535)
+        self.oaiport_entry.setValue(8089)  # Set default port value
+
+        self.server_settings_layout.addWidget(self.oai_checkbox)
+        self.server_settings_layout.addWidget(self.oaiport_label)
+        self.server_settings_layout.addWidget(self.oaiport_entry)
+
+        # Add stretch to push all content to the top and leave any remaining space at the bottom
+        self.server_settings_layout.addStretch()
+
+        self.server_layout.addLayout(self.server_settings_layout)
 
         self.output_text = QPlainTextEdit(self)
         self.output_text.setReadOnly(True)
@@ -154,9 +207,6 @@ class LlamaServerWrapper(QMainWindow):
 
         self.model_layout.addWidget(self.output_text)
         self.model_layout.addWidget(self.stop_button)
-
-        # Checkbox for the --mlock option
-        self.mlock_checkbox = QCheckBox('Lock memory (mlock)', self)
 
         self.start_button = QPushButton('Load Model', self)
         self.start_button.clicked.connect(self.start_server)
@@ -171,7 +221,7 @@ class LlamaServerWrapper(QMainWindow):
         gpu_layers = str(self.gpu_layers_entry.value())
         threads = str(self.threads_entry.value())
         ctx_size = str(self.ctx_size_entry.value())
-        bth_size = str(self.port_entry.value())
+        bth_size = str(self.bth_size_entry.value())
         host = self.host_entry.text()
         port = str(self.port_entry.value())
         mlock = "--mlock" if self.mlock_checkbox.isChecked() else ""
@@ -208,13 +258,17 @@ class LlamaServerWrapper(QMainWindow):
         self.threads_entry.hide()
         self.ctx_size_label.hide()
         self.ctx_size_entry.hide()
+        self.bth_size_label.hide()
+        self.bth_size_entry.hide()
+        self.mlock_checkbox.hide()
         self.host_label.hide()
         self.host_entry.hide()
         self.port_label.hide()
         self.port_entry.hide()
-        self.mlock_checkbox.hide()
+        self.oaiport_label.hide()
+        self.oaiport_entry.hide()
         self.start_button.hide()
-
+        self.oai_checkbox.hide()
         self.output_text.show()
         self.stop_button.show()
 
@@ -257,11 +311,16 @@ class LlamaServerWrapper(QMainWindow):
         self.threads_entry.show()
         self.ctx_size_label.show()
         self.ctx_size_entry.show()
+        self.bth_size_label.show()
+        self.bth_size_entry.show()
+        self.mlock_checkbox.show()
         self.host_label.show()
         self.host_entry.show()
         self.port_label.show()
         self.port_entry.show()
-        self.mlock_checkbox.show()
+        self.oai_checkbox.show()
+        self.oaiport_label.show()
+        self.oaiport_entry.show()
         self.start_button.show()
 
     def on_output_received(self, output):
@@ -297,6 +356,7 @@ class LlamaServerWrapper(QMainWindow):
                 self.gpu_layers_entry.setValue(int(gpu_layers))
                 self.threads_entry.setValue(int(threads))
                 self.ctx_size_entry.setValue(int(ctx_size))
+                self.bth_size_entry.setValue(int(bth_size))
                 self.port_entry.setValue(int(port))
                 self.host_entry.setText(host)
                 self.mlock_checkbox.setChecked(mlock == "True")  # Set checkbox state
