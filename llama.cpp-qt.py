@@ -5,9 +5,11 @@ import threading
 import os
 import re
 import time  # Import the time module
-from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QFileDialog, QSpinBox, QVBoxLayout, QWidget, QLineEdit, QHBoxLayout, QPlainTextEdit, QCheckBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QFileDialog, QSpinBox, QVBoxLayout, QWidget, \
+    QLineEdit, QHBoxLayout, QPlainTextEdit, QCheckBox, QTabWidget, QWidget
 from PyQt5.QtCore import Qt, pyqtSignal, QObject
 import configparser
+
 
 class ServerRunner(QObject):
     started = pyqtSignal()
@@ -38,6 +40,7 @@ class ServerRunner(QObject):
         self.process.wait()
         self.stopped.emit()
 
+
 class ModelChooser(QWidget):
     def __init__(self):
         super().__init__()
@@ -61,6 +64,7 @@ class ModelChooser(QWidget):
         if model_path:
             self.model_entry.setText(model_path)
 
+
 class LlamaServerWrapper(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -73,14 +77,72 @@ class LlamaServerWrapper(QMainWindow):
         self.setWindowTitle('LLama.cpp QT')
         self.setGeometry(100, 100, 400, 250)
 
+        self.tab_widget = QTabWidget(self)
+
+        self.model_tab = QWidget()
+        self.server_tab = QWidget()
+
+        self.tab_widget.addTab(self.model_tab, "Model Settings")
+        self.tab_widget.addTab(self.server_tab, "Server Settings")
+
+        self.setCentralWidget(self.tab_widget)
+
+        # Model Settings Tab
+        self.model_layout = QVBoxLayout()
+        self.model_tab.setLayout(self.model_layout)
+
         self.model_chooser = ModelChooser()
         self.model_chooser.layout.setAlignment(Qt.AlignTop)
 
-        self.central_widget = QWidget()
-        self.setCentralWidget(self.central_widget)
+        self.model_layout.addWidget(self.model_chooser)
 
-        self.layout = QVBoxLayout()
-        self.central_widget.setLayout(self.layout)
+        self.gpu_layers_label = QLabel('GPU Layers:', self)
+        self.gpu_layers_entry = QSpinBox(self)
+        self.gpu_layers_entry.setMinimum(1)
+        self.gpu_layers_entry.setMaximum(100)
+
+        self.threads_label = QLabel('Threads:', self)
+        self.threads_entry = QSpinBox(self)
+        self.threads_entry.setMinimum(1)
+        self.threads_entry.setMaximum(100)
+
+        self.ctx_size_label = QLabel('Context Size:', self)
+        self.ctx_size_entry = QSpinBox(self)
+        self.ctx_size_entry.setMinimum(1)
+        self.ctx_size_entry.setMaximum(10000)
+
+        self.model_layout.addWidget(self.gpu_layers_label)
+        self.model_layout.addWidget(self.gpu_layers_entry)
+        self.model_layout.addWidget(self.threads_label)
+        self.model_layout.addWidget(self.threads_entry)
+        self.model_layout.addWidget(self.ctx_size_label)
+        self.model_layout.addWidget(self.ctx_size_entry)
+
+        # Server Settings Tab
+        self.server_layout = QVBoxLayout()
+        self.server_tab.setLayout(self.server_layout)
+
+        self.host_label = QLabel('Server Host:', self)
+        self.host_entry = QLineEdit(self)
+        self.host_entry.setPlaceholderText('Server Host...')
+        self.host_entry.setText('localhost')  # Set default host value
+
+        self.port_label = QLabel('Server Port:', self)
+        self.port_entry = QSpinBox(self)
+        self.port_entry.setMinimum(1)
+        self.port_entry.setMaximum(65535)
+        self.port_entry.setValue(8080)  # Set default port value
+
+        self.host_layout = QHBoxLayout()
+        self.host_layout.addWidget(self.host_label)
+        self.host_layout.addWidget(self.host_entry)
+
+        self.port_layout = QHBoxLayout()
+        self.port_layout.addWidget(self.port_label)
+        self.port_layout.addWidget(self.port_entry)
+
+        self.server_layout.addLayout(self.host_layout)
+        self.server_layout.addLayout(self.port_layout)
 
         self.output_text = QPlainTextEdit(self)
         self.output_text.setReadOnly(True)
@@ -90,60 +152,17 @@ class LlamaServerWrapper(QMainWindow):
         self.stop_button.hide()
         self.stop_button.clicked.connect(self.stop_server)
 
-        self.layout.addWidget(self.model_chooser)
-        self.layout.addWidget(self.output_text)
-        self.layout.addWidget(self.stop_button)
-
-        self.gpu_layers_label = QLabel('GPU Layers:', self)
-        self.gpu_layers_label.move(20, 60)
-
-        self.gpu_layers_entry = QSpinBox(self)
-        self.gpu_layers_entry.move(140, 60)
-        self.gpu_layers_entry.setMinimum(1)
-        self.gpu_layers_entry.setMaximum(100)
-
-        self.threads_label = QLabel('Threads:', self)
-        self.threads_label.move(20, 100)
-
-        self.threads_entry = QSpinBox(self)
-        self.threads_entry.move(140, 100)
-        self.threads_entry.setMinimum(1)
-        self.threads_entry.setMaximum(100)
+        self.model_layout.addWidget(self.output_text)
+        self.model_layout.addWidget(self.stop_button)
 
         # Checkbox for the --mlock option
         self.mlock_checkbox = QCheckBox('Lock memory (mlock)', self)
-        self.mlock_checkbox.move(20, 180)
-
-        self.ctx_size_label = QLabel('Context Size:', self)
-        self.ctx_size_label.move(20, 140)
-
-        self.ctx_size_entry = QSpinBox(self)
-        self.ctx_size_entry.move(140, 140)
-        self.ctx_size_entry.setMinimum(1)
-        self.ctx_size_entry.setMaximum(10000)
-
-        self.bth_size_label = QLabel('Batch Size:', self)
-        self.bth_size_label.move(20, 140)
-
-        self.bth_size_entry = QSpinBox(self)
-        self.bth_size_entry.move(140, 140)
-        self.bth_size_entry.setMinimum(1)
-        self.bth_size_entry.setMaximum(10000)
 
         self.start_button = QPushButton('Load Model', self)
-        self.start_button.move(140, 220)
         self.start_button.clicked.connect(self.start_server)
 
-        self.layout.addWidget(self.gpu_layers_label)
-        self.layout.addWidget(self.gpu_layers_entry)
-        self.layout.addWidget(self.threads_label)
-        self.layout.addWidget(self.threads_entry)
-        self.layout.addWidget(self.mlock_checkbox)  # Add checkbox to layout
-        self.layout.addWidget(self.ctx_size_label)
-        self.layout.addWidget(self.ctx_size_entry)
-        self.layout.addWidget(self.bth_size_label)
-        self.layout.addWidget(self.bth_size_entry)
-        self.layout.addWidget(self.start_button)
+        self.model_layout.addWidget(self.mlock_checkbox)
+        self.model_layout.addWidget(self.start_button)
 
         self.show()
 
@@ -152,7 +171,9 @@ class LlamaServerWrapper(QMainWindow):
         gpu_layers = str(self.gpu_layers_entry.value())
         threads = str(self.threads_entry.value())
         ctx_size = str(self.ctx_size_entry.value())
-        bth_size = str(self.bth_size_entry.value())
+        bth_size = str(self.port_entry.value())
+        host = self.host_entry.text()
+        port = str(self.port_entry.value())
         mlock = "--mlock" if self.mlock_checkbox.isChecked() else ""
 
         if not model_path:
@@ -165,6 +186,8 @@ class LlamaServerWrapper(QMainWindow):
             "--threads", threads,
             "--ctx-size", ctx_size,
             "--batch-size", bth_size,
+            "--host", host,  # Add host argument
+            "--port", port,  # Add port argument
             mlock  # Include --mlock if the checkbox is checked
         ]
 
@@ -183,11 +206,13 @@ class LlamaServerWrapper(QMainWindow):
         self.gpu_layers_entry.hide()
         self.threads_label.hide()
         self.threads_entry.hide()
-        self.mlock_checkbox.hide()
         self.ctx_size_label.hide()
         self.ctx_size_entry.hide()
-        self.bth_size_label.hide()
-        self.bth_size_entry.hide()
+        self.host_label.hide()
+        self.host_entry.hide()
+        self.port_label.hide()
+        self.port_entry.hide()
+        self.mlock_checkbox.hide()
         self.start_button.hide()
 
         self.output_text.show()
@@ -203,7 +228,8 @@ class LlamaServerWrapper(QMainWindow):
         time.sleep(api_delay)
 
         # Start the api_like_OAI.py script as a separate process
-        self.api_process = subprocess.Popen(["python3", "api_like_OAI.py"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+        self.api_process = subprocess.Popen(["python3", "api_like_OAI.py"], stdout=subprocess.PIPE,
+                                            stderr=subprocess.STDOUT, universal_newlines=True)
 
         while True:
             line = self.api_process.stdout.readline()
@@ -229,11 +255,13 @@ class LlamaServerWrapper(QMainWindow):
         self.gpu_layers_entry.show()
         self.threads_label.show()
         self.threads_entry.show()
-        self.mlock_checkbox.show()
         self.ctx_size_label.show()
         self.ctx_size_entry.show()
-        self.bth_size_label.show()
-        self.bth_size_entry.show()
+        self.host_label.show()
+        self.host_entry.show()
+        self.port_label.show()
+        self.port_entry.show()
+        self.mlock_checkbox.show()
         self.start_button.show()
 
     def on_output_received(self, output):
@@ -262,12 +290,15 @@ class LlamaServerWrapper(QMainWindow):
                 threads = config.get("Settings", "threads")
                 ctx_size = config.get("Settings", "ctx_size")
                 bth_size = config.get("Settings", "bth_size")
+                host = config.get("Settings", "host")  # Load host setting
+                port = config.get("Settings", "port")  # Load port setting
                 mlock = config.get("Settings", "mlock")  # Load mlock setting
                 self.model_chooser.model_entry.setText(model_path)
                 self.gpu_layers_entry.setValue(int(gpu_layers))
                 self.threads_entry.setValue(int(threads))
                 self.ctx_size_entry.setValue(int(ctx_size))
-                self.bth_size_entry.setValue(int(bth_size))
+                self.port_entry.setValue(int(port))
+                self.host_entry.setText(host)
                 self.mlock_checkbox.setChecked(mlock == "True")  # Set checkbox state
 
     def save_settings(self, model_path, gpu_layers, threads, ctx_size, bth_size, mlock):
@@ -280,15 +311,19 @@ class LlamaServerWrapper(QMainWindow):
         config.set("Settings", "threads", threads)
         config.set("Settings", "ctx_size", ctx_size)
         config.set("Settings", "bth_size", bth_size)
+        config.set("Settings", "host", self.host_entry.text())  # Save host setting
+        config.set("Settings", "port", str(self.port_entry.value()))  # Save port setting as string
         config.set("Settings", "mlock", str(self.mlock_checkbox.isChecked()))  # Save mlock setting as string
         with open(config_file, "w") as configfile:
             config.write(configfile)
+
 
 def main():
     app = QApplication(sys.argv)
     window = LlamaServerWrapper()
     app.aboutToQuit.connect(window.stop_server)  # Ensure the server is stopped when the GUI is closed
     sys.exit(app.exec_())
+
 
 if __name__ == '__main__':
     main()
