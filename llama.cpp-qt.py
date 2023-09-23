@@ -258,6 +258,11 @@ class LlamaServerWrapper(QMainWindow):
         self.server_runner_thread = threading.Thread(target=self.server_runner.run_server)
         self.server_runner_thread.start()
 
+        self.save0 = self.tab_widget.widget(0)
+        self.save1 = self.tab_widget.widget(1)
+        self.tab_widget.removeTab(0)
+        self.tab_widget.insertTab(0, self.save0, 'Server Output')
+        self.tab_widget.removeTab(1)
         self.model_chooser.hide()
         self.gpu_layers_label.hide()
         self.gpu_layers_entry.hide()
@@ -313,6 +318,9 @@ class LlamaServerWrapper(QMainWindow):
         self.server_runner_thread.join()
         self.server_runner_thread = None
 
+        self.tab_widget.removeTab(0)
+        self.tab_widget.insertTab(0, self.save0, 'Model Settings')
+        self.tab_widget.insertTab(1, self.save1, 'Server Settings')
         self.output_text.hide()
         self.stop_button.hide()
         self.model_chooser.show()
