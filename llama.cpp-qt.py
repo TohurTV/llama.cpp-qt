@@ -66,6 +66,13 @@ class ModelChooser(QWidget):
 
 
 class LlamaServerWrapper(QMainWindow):
+    # checking if the config directory
+    # exist or not.
+    if not os.path.isdir(os.path.join(os.path.expanduser("~"), ".config", "llama.cpp-qt")):
+        # if the demo_folder2 directory is
+        # not present then create it.
+        os.makedirs(os.path.join(os.path.expanduser("~"), ".config", "llama.cpp-qt"))
+
     def __init__(self):
         super().__init__()
         self.initUI()
@@ -100,7 +107,6 @@ class LlamaServerWrapper(QMainWindow):
 
         # Add some vertical space between Model Selection and GPU Layers
 
-
         self.row1_layout = QHBoxLayout()  # Create a QHBoxLayout for GPU Layers
         self.gpu_layers_label = QLabel('GPU Layers:', self)
         self.gpu_layers_entry = QSpinBox(self)
@@ -111,7 +117,6 @@ class LlamaServerWrapper(QMainWindow):
         self.model_settings_layout.addLayout(self.row1_layout)
 
         # Add some vertical space between GPU Layers and Threads
-
 
         self.row2_layout = QHBoxLayout()  # Create a QHBoxLayout for Threads
         self.threads_label = QLabel('Threads:', self)
@@ -133,7 +138,6 @@ class LlamaServerWrapper(QMainWindow):
         self.row3_layout.addWidget(self.ctx_size_entry)
         self.model_settings_layout.addLayout(self.row3_layout)
 
-
         self.row4_layout = QHBoxLayout()  # Create a QHBoxLayout for Context Size
         self.bth_size_label = QLabel('Batch Size:', self)
         self.bth_size_entry = QSpinBox(self)
@@ -148,6 +152,12 @@ class LlamaServerWrapper(QMainWindow):
         self.mlock_checkbox = QCheckBox('Lock memory (mlock)', self)
         self.row5_layout.addWidget(self.mlock_checkbox)
         self.model_settings_layout.addLayout(self.row5_layout)
+
+        # Checkbox for the ----low-vram option
+        self.row6_layout = QHBoxLayout()  # Create a QHBoxLayout for Context Size
+        self.lowvram_checkbox = QCheckBox('Low Vram (Dont assign vram scratch buffer)', self)
+        self.row6_layout.addWidget(self.lowvram_checkbox)
+        self.model_settings_layout.addLayout(self.row6_layout)
 
         # Add stretch to push all content to the top and leave any remaining space at the bottom
         self.model_settings_layout.addStretch()
@@ -208,7 +218,6 @@ class LlamaServerWrapper(QMainWindow):
         self.start_button = QPushButton('Load Model', self)
         self.start_button.clicked.connect(self.start_server)
 
-        self.model_layout.addWidget(self.mlock_checkbox)
         self.model_layout.addWidget(self.start_button)
 
         self.show()
@@ -223,6 +232,7 @@ class LlamaServerWrapper(QMainWindow):
         port = str(self.port_entry.value())
         oaiport = str(self.port_entry.value())
         mlock = "--mlock" if self.mlock_checkbox.isChecked() else ""
+        lowvram = "--low-vram" if self.lowvram_checkbox.isChecked() else ""
 
         if not model_path:
             return
@@ -236,11 +246,15 @@ class LlamaServerWrapper(QMainWindow):
             "--batch-size", bth_size,
             "--host", host,  # Add host argument
             "--port", port,  # Add port argument
-            "--path", "./public",
-            mlock  # Include --mlock if the checkbox is checked
+            "--path", "./public"
         ]
+        if self.mlock_checkbox.isChecked():
+            cmd.append("--mlock")
 
-        self.save_settings(model_path, gpu_layers, threads, ctx_size, bth_size, mlock, host, port, oaiport)
+        if self.lowvram_checkbox.isChecked():
+            cmd.append("--low-vram")
+
+        self.save_settings(model_path, gpu_layers, threads, ctx_size, bth_size, mlock, lowvram, host, port, oaiport)
 
         self.server_runner = ServerRunner(cmd)
         self.server_runner.started.connect(self.on_server_started)
@@ -260,6 +274,7 @@ class LlamaServerWrapper(QMainWindow):
         self.bth_size_label.hide()
         self.bth_size_entry.hide()
         self.mlock_checkbox.hide()
+        self.lowvram_checkbox.hide()
         self.host_label.hide()
         self.host_entry.hide()
         self.port_label.hide()
@@ -272,8 +287,9 @@ class LlamaServerWrapper(QMainWindow):
         self.stop_button.show()
 
         # Start the api_like_OAI.py script in a separate thread with a delay
-        api_thread = threading.Thread(target=self.start_api_script_with_delay)
-        api_thread.start()
+        if self.oai_checkbox.isChecked():
+            api_thread = threading.Thread(target=self.start_api_script_with_delay)
+            api_thread.start()
 
     def start_api_script_with_delay(self):
         # Delay for a specified time (in seconds) before starting the API script
@@ -313,6 +329,7 @@ class LlamaServerWrapper(QMainWindow):
         self.bth_size_label.show()
         self.bth_size_entry.show()
         self.mlock_checkbox.show()
+        self.lowvram_checkbox.show()
         self.host_label.show()
         self.host_entry.show()
         self.port_label.show()
@@ -339,7 +356,7 @@ class LlamaServerWrapper(QMainWindow):
 
     def load_settings(self):
         config = configparser.ConfigParser()
-        config_file = os.path.join(os.path.expanduser("~"), ".config", "llama_qt_settings.ini")
+        config_file = os.path.join(os.path.expanduser("~"), ".config", "llama.cpp-qt", "settings.ini")
         if os.path.exists(config_file):
             config.read(config_file)
             if config.has_section("Settings"):
@@ -353,6 +370,7 @@ class LlamaServerWrapper(QMainWindow):
                 oai = config.get("Settings", "oai")  # Load openai setting
                 oaiport = config.get("Settings", "oaiport")  # Load port setting
                 mlock = config.get("Settings", "mlock")  # Load mlock setting
+                lowvram = config.get("Settings", "lowvram")  # Load mlock setting
                 self.model_chooser.model_entry.setText(model_path)
                 self.gpu_layers_entry.setValue(int(gpu_layers))
                 self.threads_entry.setValue(int(threads))
@@ -363,10 +381,11 @@ class LlamaServerWrapper(QMainWindow):
                 self.oai_checkbox.setChecked(oai == "True")  # Set checkbox state
                 self.oaiport_entry.setValue(int(oaiport))
                 self.mlock_checkbox.setChecked(mlock == "True")  # Set checkbox state
+                self.lowvram_checkbox.setChecked(lowvram == "True")  # Set checkbox state
 
-    def save_settings(self, model_path, gpu_layers, threads, ctx_size, bth_size, mlock, host, port, oaiport):
+    def save_settings(self, model_path, gpu_layers, threads, ctx_size, bth_size, mlock, lowvram, host, port, oaiport):
         config = configparser.ConfigParser()
-        config_file = os.path.join(os.path.expanduser("~"), ".config", "llama_qt_settings.ini")
+        config_file = os.path.join(os.path.expanduser("~"), ".config", "llama.cpp-qt", "settings.ini")
         if not config.has_section("Settings"):
             config.add_section("Settings")
         config.set("Settings", "model_path", model_path)
@@ -379,6 +398,7 @@ class LlamaServerWrapper(QMainWindow):
         config.set("Settings", "oai", str(self.oai_checkbox.isChecked()))  # Save openai setting as string
         config.set("Settings", "oaiport", str(self.oaiport_entry.value()))  # Save port setting as string
         config.set("Settings", "mlock", str(self.mlock_checkbox.isChecked()))  # Save mlock setting as string
+        config.set("Settings", "lowvram", str(self.lowvram_checkbox.isChecked()))  # Save mlock setting as string
         with open(config_file, "w") as configfile:
             config.write(configfile)
 
