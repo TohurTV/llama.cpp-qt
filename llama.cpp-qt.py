@@ -82,7 +82,7 @@ class LlamaServerWrapper(QMainWindow):
 
     def initUI(self):
         self.setWindowTitle('LLama.cpp QT')
-        self.setGeometry(100, 100, 400, 250)
+        self.setGeometry(100, 100, 766, 593)
 
         self.tab_widget = QTabWidget(self)
 
@@ -105,8 +105,6 @@ class LlamaServerWrapper(QMainWindow):
 
         self.model_settings_layout.addWidget(self.model_chooser)
 
-        # Add some vertical space between Model Selection and GPU Layers
-
         self.row1_layout = QHBoxLayout()  # Create a QHBoxLayout for GPU Layers
         self.gpu_layers_label = QLabel('GPU Layers:', self)
         self.gpu_layers_entry = QSpinBox(self)
@@ -115,8 +113,6 @@ class LlamaServerWrapper(QMainWindow):
         self.row1_layout.addWidget(self.gpu_layers_label)
         self.row1_layout.addWidget(self.gpu_layers_entry)
         self.model_settings_layout.addLayout(self.row1_layout)
-
-        # Add some vertical space between GPU Layers and Threads
 
         self.row2_layout = QHBoxLayout()  # Create a QHBoxLayout for Threads
         self.threads_label = QLabel('Threads:', self)
@@ -127,8 +123,6 @@ class LlamaServerWrapper(QMainWindow):
         self.row2_layout.addWidget(self.threads_entry)
         self.model_settings_layout.addLayout(self.row2_layout)
 
-        # Add some vertical space between Threads and Context Size
-
         self.row3_layout = QHBoxLayout()  # Create a QHBoxLayout for Context Size
         self.ctx_size_label = QLabel('Context Size:', self)
         self.ctx_size_entry = QSpinBox(self)
@@ -138,7 +132,7 @@ class LlamaServerWrapper(QMainWindow):
         self.row3_layout.addWidget(self.ctx_size_entry)
         self.model_settings_layout.addLayout(self.row3_layout)
 
-        self.row4_layout = QHBoxLayout()  # Create a QHBoxLayout for Context Size
+        self.row4_layout = QHBoxLayout()  # Create a QHBoxLayout for Batch Size
         self.bth_size_label = QLabel('Batch Size:', self)
         self.bth_size_entry = QSpinBox(self)
         self.bth_size_entry.setMinimum(1)
@@ -148,13 +142,13 @@ class LlamaServerWrapper(QMainWindow):
         self.model_settings_layout.addLayout(self.row4_layout)
 
         # Checkbox for the --mlock option
-        self.row5_layout = QHBoxLayout()  # Create a QHBoxLayout for Context Size
+        self.row5_layout = QHBoxLayout()  # Create a QHBoxLayout for mlock
         self.mlock_checkbox = QCheckBox('Lock memory (mlock)', self)
         self.row5_layout.addWidget(self.mlock_checkbox)
         self.model_settings_layout.addLayout(self.row5_layout)
 
         # Checkbox for the ----low-vram option
-        self.row6_layout = QHBoxLayout()  # Create a QHBoxLayout for Context Size
+        self.row6_layout = QHBoxLayout()  # Create a QHBoxLayout for Lowvram
         self.lowvram_checkbox = QCheckBox('Low Vram (Dont assign vram scratch buffer)', self)
         self.row6_layout.addWidget(self.lowvram_checkbox)
         self.model_settings_layout.addLayout(self.row6_layout)
@@ -298,7 +292,8 @@ class LlamaServerWrapper(QMainWindow):
         host = self.host_entry.text()
         oaiport = str(self.oaiport_entry.value())
         # Start the api_like_OAI.py script as a separate process
-        self.api_process = subprocess.Popen(["python3", "api_like_OAI.py", "--host", host, "--port", oaiport], stdout=subprocess.PIPE,
+        self.api_process = subprocess.Popen(["python3", "api_like_OAI.py", "--host", host, "--port", oaiport],
+                                            stdout=subprocess.PIPE,
                                             stderr=subprocess.STDOUT, universal_newlines=True)
 
         while True:
@@ -361,28 +356,49 @@ class LlamaServerWrapper(QMainWindow):
         if os.path.exists(config_file):
             config.read(config_file)
             if config.has_section("Settings"):
-                model_path = config.get("Settings", "model_path")
-                gpu_layers = config.get("Settings", "gpu_layers")
-                threads = config.get("Settings", "threads")
-                ctx_size = config.get("Settings", "ctx_size")
-                bth_size = config.get("Settings", "bth_size")
-                host = config.get("Settings", "host")  # Load host setting
-                port = config.get("Settings", "port")  # Load port setting
-                oai = config.get("Settings", "oai")  # Load openai setting
-                oaiport = config.get("Settings", "oaiport")  # Load port setting
-                mlock = config.get("Settings", "mlock")  # Load mlock setting
-                lowvram = config.get("Settings", "lowvram")  # Load mlock setting
-                self.model_chooser.model_entry.setText(model_path)
-                self.gpu_layers_entry.setValue(int(gpu_layers))
-                self.threads_entry.setValue(int(threads))
-                self.ctx_size_entry.setValue(int(ctx_size))
-                self.bth_size_entry.setValue(int(bth_size))
-                self.port_entry.setValue(int(port))
-                self.host_entry.setText(host)
-                self.oai_checkbox.setChecked(oai == "True")  # Set checkbox state
-                self.oaiport_entry.setValue(int(oaiport))
-                self.mlock_checkbox.setChecked(mlock == "True")  # Set checkbox state
-                self.lowvram_checkbox.setChecked(lowvram == "True")  # Set checkbox state
+                if config.has_option("Settings", "model_path"):
+                    model_path = config.get("Settings", "model_path")
+                    self.model_chooser.model_entry.setText(model_path)
+
+                if config.has_option("Settings", "gpu_layers"):
+                    gpu_layers = config.get("Settings", "gpu_layers")
+                    self.gpu_layers_entry.setValue(int(gpu_layers))
+
+                if config.has_option("Settings", "threads"):
+                    threads = config.get("Settings", "threads")
+                    self.threads_entry.setValue(int(threads))
+
+                if config.has_option("Settings", "ctx_size"):
+                    ctx_size = config.get("Settings", "ctx_size")
+                    self.ctx_size_entry.setValue(int(ctx_size))
+
+                if config.has_option("Settings", "bth_size"):
+                    bth_size = config.get("Settings", "bth_size")
+                    self.bth_size_entry.setValue(int(bth_size))
+
+                if config.has_option("Settings", "host"):
+                    host = config.get("Settings", "host")  # Load host setting
+                    self.host_entry.setText(host)
+
+                if config.has_option("Settings", "port"):
+                    port = config.get("Settings", "port")  # Load port setting
+                    self.port_entry.setValue(int(port))
+
+                if config.has_option("Settings", "oai"):
+                    oai = config.get("Settings", "oai")  # Load openai setting
+                    self.oai_checkbox.setChecked(oai == "True")  # Set checkbox state
+
+                if config.has_option("Settings", "oaiport"):
+                    oaiport = config.get("Settings", "oaiport")  # Load port setting
+                    self.oaiport_entry.setValue(int(oaiport))
+
+                if config.has_option("Settings", "mlock"):
+                    mlock = config.get("Settings", "mlock")  # Load mlock setting
+                    self.mlock_checkbox.setChecked(mlock == "True")  # Set checkbox state
+
+                if config.has_option("Settings", "lowvram"):
+                    lowvram = config.get("Settings", "lowvram")  # Load lowvram setting
+                    self.lowvram_checkbox.setChecked(lowvram == "True")  # Set checkbox state
 
     def save_settings(self, model_path, gpu_layers, threads, ctx_size, bth_size, mlock, lowvram, host, port, oaiport):
         config = configparser.ConfigParser()
