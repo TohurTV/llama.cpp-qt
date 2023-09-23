@@ -26,6 +26,7 @@ sudo cp api_like_OAI.py "$INSTALL_DIR"
 sudo cp server "$INSTALL_DIR"
 sudo cp llama.cpp-qt.py "$INSTALL_DIR"
 sudo cp llama.png "$INSTALL_DIR"
+sudo cp -r public "$INSTALL_DIR/public"
 sudo cp llama.cpp-qt "$BIN_DIR"
 
 # Set proper permissions
