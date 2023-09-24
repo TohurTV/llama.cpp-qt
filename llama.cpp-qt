@@ -16,6 +16,8 @@ if [ -f "./llama.cpp-qt.py" ]; then
 
     # Run the llama.cpp-qt.py script within the virtual environment
     python3 ./llama.cpp-qt.py "$@"
+    deactivate
+    rm -r -f -d ./venv
     exit $?
 fi
 
