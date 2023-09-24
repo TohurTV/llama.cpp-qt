@@ -127,7 +127,7 @@ class LlamaServerWrapper(QMainWindow):
 
     def initUI(self):
         self.setWindowTitle('LLama.cpp QT')
-        self.setGeometry(100, 100, 766, 593)
+        self.setGeometry(100, 100, 650, 372)
 
         self.tab_widget = QTabWidget(self)
 
