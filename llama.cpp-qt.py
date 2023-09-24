@@ -317,6 +317,14 @@ class LlamaServerWrapper(QMainWindow):
         if self.lowvram_checkbox.isChecked():
             cmd.append("--low-vram")
 
+        if self.lora_chooser.lora_entry.text():
+            cmd.append("--lora")
+            cmd.append(self.lora_chooser.lora_entry.text())  # Append the lora_path value
+
+        if self.lorabase_chooser.lorabase_entry.text():
+            cmd.append("--lora-base")
+            cmd.append(self.lorabase_chooser.lorabase_entry.text()) # Append the lorabase_path value
+
         self.save_settings(model_path, gpu_layers, threads, ctx_size, bth_size, mlock, lowvram, lora_path, lorabase_path, host, port, oaiport)
 
         self.server_runner = ServerRunner(cmd)
