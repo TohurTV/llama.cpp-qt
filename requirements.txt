@@ -1,0 +1,5 @@
+Flask
+requests
+AnyQt
+PyQt5
+PyQt5-sip

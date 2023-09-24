@@ -5,15 +5,21 @@ INSTALL_DIR="/opt/llama.cpp-qt"
 BIN_DIR="/usr/bin"
 DESKTOP_DIR="/usr/share/applications"
 
-# # Check if the script is run as root (sudo)
-# if [[ $EUID -ne 0 ]]; then
-#     echo "This script must be run as root. Please use sudo."
-#     exit 1
-# fi
+# Setup proper python venv
+python3 -m venv --system-site-packages "venv"
+source "./venv/bin/activate"
+pip install -r requirements.txt
+deactivate
 
 # Ask for the sudo password
 echo "Please enter your sudo password:"
 sudo -v
+
+# Check if llama.cpp-qt.py exists in /opt/llama.cpp-qt
+if [ -f "/opt/llama.cpp-qt/llama.cpp-qt.py" ]; then
+    sudo rm -r -f -d /opt/llama.cpp-qt
+    exit $?
+fi
 
 # Create the installation directory
 echo "Creating installation directory..."
@@ -26,7 +32,9 @@ sudo cp api_like_OAI.py "$INSTALL_DIR"
 sudo cp server "$INSTALL_DIR"
 sudo cp llama.cpp-qt.py "$INSTALL_DIR"
 sudo cp llama.png "$INSTALL_DIR"
+sudo cp requirements.txt "$INSTALL_DIR"
 sudo cp -r public "$INSTALL_DIR/public"
+sudo cp -r venv "$INSTALL_DIR/venv"
 sudo cp llama.cpp-qt "$BIN_DIR"
 
 # Set proper permissions
