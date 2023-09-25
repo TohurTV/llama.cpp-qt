@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-import sys
-import subprocess
-import threading
+import configparser
 import os
 import re
+import subprocess
+import sys
+import threading
 import time  # Import the time module
-from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QFileDialog, QSpinBox, QVBoxLayout, QWidget, \
-    QLineEdit, QHBoxLayout, QPlainTextEdit, QCheckBox, QTabWidget, QWidget, QFormLayout
+
 from PyQt5.QtCore import Qt, pyqtSignal, QObject
-import configparser
+from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QFileDialog, QSpinBox, QVBoxLayout, \
+    QLineEdit, QHBoxLayout, QPlainTextEdit, QCheckBox, QTabWidget, QWidget
 
 
 class ServerRunner(QObject):
@@ -64,6 +65,7 @@ class ModelChooser(QWidget):
         if model_path:
             self.model_entry.setText(model_path)
 
+
 class LoraChooser(QWidget):
     def __init__(self):
         super().__init__()
@@ -86,6 +88,7 @@ class LoraChooser(QWidget):
         lora_path, _ = file_dialog.getOpenFileName(self, 'Select Lora', '', options=options)
         if lora_path:
             self.lora_entry.setText(lora_path)
+
 
 class LoraBaseChooser(QWidget):
     def __init__(self):
@@ -110,13 +113,21 @@ class LoraBaseChooser(QWidget):
         if lorabase_path:
             self.lorabase_entry.setText(lorabase_path)
 
+
 class LlamaServerWrapper(QMainWindow):
-    # checking if the config directory
-    # exist or not.
-    if not os.path.isdir(os.path.join(os.path.expanduser("~"), ".config", "llama.cpp-qt")):
-        # if the demo_folder2 directory is
-        # not present then create it.
-        os.makedirs(os.path.join(os.path.expanduser("~"), ".config", "llama.cpp-qt"))
+    # Check the operating system
+    if sys.platform.startswith('win'):
+        # Windows: Create the folder in AppData\Roaming
+        appdata_dir = os.getenv('APPDATA')
+        config_dir = os.path.join(appdata_dir, "llama.cpp-qt")
+    else:
+        # Linux/Unix/Mac: Create the folder in ~/.config
+        config_dir = os.path.join(os.path.expanduser("~"), ".config", "llama.cpp-qt")
+
+    # Check if the llama.cpp-qt config directory exists or not
+    if not os.path.isdir(config_dir):
+        # If the directory is not present, then create it
+        os.makedirs(config_dir)
 
     def __init__(self):
         super().__init__()
@@ -323,9 +334,10 @@ class LlamaServerWrapper(QMainWindow):
 
         if self.lorabase_chooser.lorabase_entry.text():
             cmd.append("--lora-base")
-            cmd.append(self.lorabase_chooser.lorabase_entry.text()) # Append the lorabase_path value
+            cmd.append(self.lorabase_chooser.lorabase_entry.text())  # Append the lorabase_path value
 
-        self.save_settings(model_path, gpu_layers, threads, ctx_size, bth_size, mlock, lowvram, lora_path, lorabase_path, host, port, oaiport)
+        self.save_settings(model_path, gpu_layers, threads, ctx_size, bth_size, mlock, lowvram, lora_path,
+                           lorabase_path, host, port, oaiport)
 
         self.server_runner = ServerRunner(cmd)
         self.server_runner.started.connect(self.on_server_started)
@@ -441,7 +453,13 @@ class LlamaServerWrapper(QMainWindow):
 
     def load_settings(self):
         config = configparser.ConfigParser()
-        config_file = os.path.join(os.path.expanduser("~"), ".config", "llama.cpp-qt", "settings.ini")
+        if sys.platform.startswith('win'):
+            # Windows: Load settings from AppData\Roaming
+            appdata_dir = os.getenv('APPDATA')
+            config_file = os.path.join(appdata_dir, "llama.cpp-qt", "settings.ini")
+        else:
+            # Linux/Unix/Mac: Load settings from ~/.config
+            config_file = os.path.join(os.path.expanduser("~"), ".config", "llama.cpp-qt", "settings.ini")
         if os.path.exists(config_file):
             config.read(config_file)
             if config.has_section("Settings"):
@@ -497,9 +515,16 @@ class LlamaServerWrapper(QMainWindow):
                     oaiport = config.get("Settings", "oaiport")  # Load port setting
                     self.oaiport_entry.setValue(int(oaiport))
 
-    def save_settings(self, model_path, gpu_layers, threads, ctx_size, bth_size, mlock, lowvram, lora_path, lorabase_path, host, port, oaiport):
+    def save_settings(self, model_path, gpu_layers, threads, ctx_size, bth_size, mlock, lowvram, lora_path,
+                      lorabase_path, host, port, oaiport):
         config = configparser.ConfigParser()
-        config_file = os.path.join(os.path.expanduser("~"), ".config", "llama.cpp-qt", "settings.ini")
+        if sys.platform.startswith('win'):
+            # Windows: Load settings from AppData\Roaming
+            appdata_dir = os.getenv('APPDATA')
+            config_file = os.path.join(appdata_dir, "llama.cpp-qt", "settings.ini")
+        else:
+            # Linux/Unix/Mac: Load settings from ~/.config
+            config_file = os.path.join(os.path.expanduser("~"), ".config", "llama.cpp-qt", "settings.ini")
         if not config.has_section("Settings"):
             config.add_section("Settings")
         config.set("Settings", "model_path", model_path)
