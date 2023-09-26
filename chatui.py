@@ -38,4 +38,4 @@ with block:
     submit.click(message_and_history,
                  inputs=[message, state],
                  outputs=[chatbot, state])
-block.launch(debug=True)
+block.launch(host="localhost", port=8090, debug=True)
