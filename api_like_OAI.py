@@ -1,20 +1,13 @@
 import argparse
 from flask import Flask, jsonify, request, Response
+from flask_cors import CORS, cross_origin
 import urllib.parse
 import requests
 import time
 import json
-try:
-    from fastchat import conversation
-except ImportError:
-    conversation = None
 
 app = Flask(__name__)
-try:
-    from flask_cors import CORS
-    CORS(app)
-except ImportError:
-    pass
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 parser = argparse.ArgumentParser(description="An example of using server.cpp with a similar API to OAI. It must be used together with server.cpp.")
 parser.add_argument("--chat-prompt-model", type=str, help="Set the model name of conversation template", default="")

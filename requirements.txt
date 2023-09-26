@@ -1,5 +1,8 @@
 Flask
+flask-cors
 requests
 AnyQt
 PyQt5
 PyQt5-sip
+gradio
+openai
