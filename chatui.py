@@ -1,41 +1,78 @@
-#!/usr/bin/env python3
-import gradio
-import openai
+import asyncio
+import httpx
+from typing import Optional, List
 
-openai.api_base = "http://localhost:8089"
-openai.api_key = "YOUR_API_KEY"
-prompt = "Enter Your Query Here"
+import async_timeout
+import gradio as gr
+from loguru import logger
+from pydantic import BaseModel
 
-
-def api_calling(prompt):
-    completions = openai.Completion.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": "Hello world"}]
-    )
-    message = completions.choices[0].text
-    return message
+API_KEY = "OPENAI_API_KEY"
 
 
-def message_and_history(input, history):
-    history = history or []
-    s = list(sum(history, ()))
-    s.append(input)
-    inp = ' '.join(s)
-    output = api_calling(inp)
-    history.append((input, output))
-    return history, history
+class Message(BaseModel):
+    role: str
+    content: str
 
 
-block = gradio.Blocks(theme=gradio.themes.Monochrome())
-with block:
-    gradio.Markdown("""<h1><center>ChatGPT
-	ChatBot with Gradio and OpenAI</center></h1>
-	""")
-    chatbot = gradio.Chatbot()
-    message = gradio.Textbox(placeholder=prompt)
-    state = gradio.State()
-    submit = gradio.Button("SEND")
-    submit.click(message_and_history,
-                 inputs=[message, state],
-                 outputs=[chatbot, state])
-block.launch(host="localhost", port=8090, debug=True)
+async def make_completion(messages: List[Message], nb_retries: int = 3, delay: int = 30) -> Optional[str]:
+    """
+    Sends a request to the ChatGPT API to retrieve a response based on a list of previous messages.
+    """
+    header = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {API_KEY}"
+    }
+    try:
+        async with async_timeout.timeout(delay=delay):
+            async with httpx.AsyncClient(headers=header) as aio_client:
+                counter = 0
+                keep_loop = True
+                while keep_loop:
+                    logger.debug(f"Chat/Completions Nb Retries : {counter}")
+                    try:
+                        resp = await aio_client.post(
+                            url="https://localhost:8089/v1/chat/completions",
+                            json={
+                                "model": "gpt-3.5-turbo",
+                                "messages": messages
+                            }
+                        )
+                        logger.debug(f"Status Code : {resp.status_code}")
+                        if resp.status_code == 200:
+                            return resp.json()["choices"][0]["message"]["content"]
+                        else:
+                            logger.warning(resp.content)
+                            keep_loop = False
+                    except Exception as e:
+                        logger.error(e)
+                        counter = counter + 1
+                        keep_loop = counter < nb_retries
+    except asyncio.TimeoutError as e:
+        logger.error(f"Timeout {delay} seconds !")
+    return None
+
+
+async def predict(input, history):
+    """
+    Predict the response of the chatbot and complete a running list of chat history.
+    """
+    history.append({"role": "user", "content": input})
+    response = await make_completion(history)
+    history.append({"role": "assistant", "content": response})
+    messages = [(history[i]["content"], history[i + 1]["content"]) for i in range(0, len(history) - 1, 2)]
+    return messages, history
+
+
+"""
+Gradio Blocks low-level API that allows to create custom web applications (here our chat app)
+"""
+with gr.Blocks() as chatui:
+    logger.info("Starting Demo...")
+    chatbot = gr.Chatbot(label="WebGPT")
+    state = gr.State([])
+    with gr.Row():
+        txt = gr.Textbox(show_label=False, placeholder="Enter text and press enter").style(container=False)
+    txt.submit(predict, [txt, state], [chatbot, state])
+
+chatui.launch(server_port=8090)

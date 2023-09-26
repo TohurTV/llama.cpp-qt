@@ -4,5 +4,13 @@ requests
 AnyQt
 PyQt5
 PyQt5-sip
+fastapi
 gradio
-openai
+httpx
+loguru
+numpy
+pydantic
+async-timeout
+PyYAML
+six
+uvicorn
