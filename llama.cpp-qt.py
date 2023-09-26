@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import configparser
 import os
+import platform
 import re
 import subprocess
 import sys
@@ -311,16 +312,31 @@ class LlamaServerWrapper(QMainWindow):
         if not model_path:
             return
 
-        cmd = [
-            "./server",
-            "--model", model_path,
-            "--n-gpu-layers", gpu_layers,
-            "--threads", threads,
-            "--ctx-size", ctx_size,
-            "--batch-size", bth_size,
-            "--host", host,  # Add host argument
-            "--port", port  # Add port argument
-        ]
+        if platform.system() == "Windows":
+            # On Windows, execute server.exe
+            cmd = [
+                "server.exe",
+                "--model", model_path,
+                "--n-gpu-layers", gpu_layers,
+                "--threads", threads,
+                "--ctx-size", ctx_size,
+                "--batch-size", bth_size,
+                "--host", host,
+                "--port", port
+            ]
+        else:
+            # On Linux and other Unix-like OSes, execute ./server
+            cmd = [
+                "./server",
+                "--model", model_path,
+                "--n-gpu-layers", gpu_layers,
+                "--threads", threads,
+                "--ctx-size", ctx_size,
+                "--batch-size", bth_size,
+                "--host", host,
+                "--port", port
+            ]
+
         if self.mlock_checkbox.isChecked():
             cmd.append("--mlock")
 
