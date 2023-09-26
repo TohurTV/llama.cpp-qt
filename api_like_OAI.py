@@ -248,9 +248,16 @@ def list_models():
     # Define the available models here. You can add more as needed.
     models = [
         {
-            "id": "llama-cpp",
-            "name": "LLaMA_CPP",
-            "description": "Your LLaMA_CPP model"
+            "object": "list",
+            "data": [
+                {
+                    "id": "Llama.cpp",
+                    "object": "model",
+                    "created": 1686935002,
+                    "owned_by": "llama.cpp"
+                },
+            ],
+            "object": "list"
         },
         # Add more models here
     ]
