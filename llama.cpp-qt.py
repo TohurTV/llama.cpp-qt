@@ -322,7 +322,8 @@ class LlamaServerWrapper(QMainWindow):
                 "--ctx-size", ctx_size,
                 "--batch-size", bth_size,
                 "--host", host,
-                "--port", port
+                "--port", port,
+                "--path", "./public"
             ]
         else:
             # On Linux and other Unix-like OSes, execute ./server
@@ -334,7 +335,8 @@ class LlamaServerWrapper(QMainWindow):
                 "--ctx-size", ctx_size,
                 "--batch-size", bth_size,
                 "--host", host,
-                "--port", port
+                "--port", port,
+                "--path", "./public"
             ]
 
         if self.mlock_checkbox.isChecked():

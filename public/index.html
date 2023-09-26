@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="color-scheme" content="light dark">
+  <title>llama.cpp - chat</title>
+
+  <style>
+    html, body {
+      height: 100%;
+    }
+    body {
+      font-family: system-ui;
+    }
+
+    #container {
+      margin: 0em auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+    }
+
+    main {
+      margin: 3px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1em;
+
+      flex-grow: 1;
+      overflow-y: auto;
+
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 0.5em;
+    }
+
+    body {
+      max-width: 42em;
+      min-width: 300px;
+      line-height: 1.2;
+      margin: 0 auto;
+      padding: 0 0.5em;
+    }
+
+    p {
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      hyphens: auto;
+      margin-top: 0.5em;
+      margin-bottom: 0.5em;
+    }
+
+    #chat {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .msg {
+      min-height: 1em;
+      border: 1px solid;
+      border-radius: 10px;
+      padding: 0.5em;
+      max-width: 90%;
+    }
+    .msg.user {
+      margin-left: 10%;
+      align-self: flex-end;
+    }
+    .msg.bot {
+      margin-right: 10%;
+      align-self: flex-start;
+    }
+    .msg.generating {
+      border: 1px dashed;
+    }
+
+    #write form {
+      margin: 1em 0 0 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5em;
+      align-items: stretch;
+    }
+
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5em;
+    }
+    .buttons-row {
+      display: flex;
+      gap: 0.5em;
+      min-height: 2em;
+    }
+    .buttons-row button {
+      flex-grow: 1;
+      font-size: inherit;
+    }
+
+    fieldset {
+      border: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    fieldset.two {
+      display: grid;
+      grid-template: "a a";
+      gap: 1em;
+    }
+
+    fieldset.three {
+      display: grid;
+      grid-template: "a a a";
+      gap: 1em;
+    }
+
+    details {
+      border: 1px solid #aaa;
+      border-radius: 4px;
+      padding: 0.5em 0.5em 0;
+      margin-top: 0.5em;
+    }
+
+    summary {
+      font-weight: bold;
+      margin: -0.5em -0.5em 0;
+      padding: 0.5em;
+      cursor: pointer;
+    }
+
+    details[open] {
+      padding: 0.5em;
+    }
+
+    textarea {
+      font: inherit;
+      padding: 5px;
+      flex-grow: 1;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    pre code {
+      display: block;
+      background-color: #222;
+      color: #ddd;
+      overflow-y: auto;
+    }
+    pre {
+      margin: 0;
+    }
+    code {
+      font-family: monospace;
+      padding: 0.1em 0.3em;
+      border-radius: 3px;
+    }
+
+    fieldset label {
+      margin: 0.5em 0;
+      display: block;
+    }
+
+    header, footer {
+      text-align: center;
+    }
+
+    footer {
+      font-size: 80%;
+      color: #888;
+    }
+  </style>
+
+  <script type="module">
+    import {
+      html, h, signal, effect, computed, render, useSignal, useEffect, useRef
+    } from '/index.js';
+    import { llama, tokenize } from '/completion.js';
+
+    const presets = signal({
+      'Alpaca': {
+        prompt: "### {{char}}:\n",
+        template: "Below is an instruction that describes a task. Write a response that appropriately completes the request.\n\n{{history}}{{prompt}}",
+        historyTemplate: "### {{name}}:\n{{message}}\n\n",
+        user: "Instruction",
+        char: "Response",
+      },
+      'Vicuna': {
+        prompt: "{{char}}: ",
+        template: "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions.\n\n{{history}}{{prompt}}",
+        historyTemplate: "{{name}}: {{message}}\n",
+        user: 'USER',
+        char: 'ASSISTANT',
+      },
+      'Orca': {
+        prompt: "### {{char}}:\n",
+        template: "### System:\nYou are an AI assistant that follows instruction extremely well. Help as much as you can.\n\n{{history}}{{prompt}}",
+        historyTemplate: "### {{name}}:\n{{message}}\n\n",
+        user: "User",
+        char: "Response",
+      },
+      'Llama 2-Chat': {
+        prompt: " [/INST] ",
+        template: "[INST] <<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature. If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct.\n\nIf you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\nHello. [/INST] Hello. {{history}}{{prompt}}",
+        historyTemplate: "{{name}} {{message}} ",
+        user: "[INST]",
+        char: "[/INST]",
+      },
+      'Phind': {
+        prompt: "### {{char}}:\n",
+        template: "### System Prompt\nYou are an intelligent programming assistant.\n\n{{history}}{{prompt}}",
+        historyTemplate: "### {{name}}:\n{{message}}\n\n",
+        user: "User Message",
+        char: "Assistant",
+      },
+      'Plain': {
+        prompt: "",
+        template: "{{history}}{{prompt}}",
+        historyTemplate: "{{message}}\n",
+        user: "",
+        char: "",
+      },
+      'Chat': {
+        prompt: "{{char}}: ",
+        template: "A chat.\n{{history}}{{prompt}}",
+        historyTemplate: "{{name}}: {{message}}\n",
+        user: "USER",
+        char: "ASSISTANT",
+      },
+    });
+
+    const session = signal({
+      ...presets.value['Alpaca'],
+      transcript: [],
+      type: "chat",
+    });
+
+    const params = signal({
+      n_predict: -1,
+      temperature: 0.7,
+      repeat_last_n: 64, // 0 = disable penalty, -1 = context size
+      repeat_penalty: 1.18, // 1.0 = disabled
+      penalize_nl: false,
+      top_k: -1, // <= 0 to use vocab size
+      top_p: 0.9, // 1.0 = disabled
+      tfs_z: 1.0, // 1.0 = disabled
+      typical_p: 1.0, // 1.0 = disabled
+      presence_penalty: 0.0, // 0.0 = disabled
+      frequency_penalty: 0.0, // 0.0 = disabled
+      mirostat: 0, // 0/1/2
+      mirostat_tau: 5, // target entropy
+      mirostat_eta: 0.1, // learning rate
+      grammar: '',
+      stop: [],
+    });
+
+    const llamaStats = signal(null);
+    const controller = signal(null);
+
+    const generating = computed(() => controller.value != null );
+    const chatStarted = computed(() => session.value.transcript.length > 0);
+
+    const transcriptUpdate = (transcript) => {
+      session.value = {
+        ...session.value,
+        transcript
+      };
+    };
+
+    // simple template replace
+    const template = (str, extraSettings) => {
+      let settings = session.value;
+      if (extraSettings) {
+        settings = { ...settings, ...extraSettings };
+      }
+      return String(str).replaceAll(/\{\{(.*?)\}\}/g, (_, key) => template(settings[key]));
+    };
+
+    const historyText = () => session.value.transcript.flatMap(([name, message]) => template(session.value.historyTemplate, {name, message})).join("");
+
+    // send message to server
+    const chat = async (msg) => {
+      if (controller.value) {
+        console.log('already running...');
+        return;
+      }
+      controller.value = new AbortController();
+
+      let name = '{{char}}';
+      let currentMessage = '';
+      let prompt;
+      if (msg.length === 0) {
+        // Continue
+        const transcript = session.value.transcript;
+        if (transcript.length === 0) {
+          controller.value = null;
+          return;
+        }
+
+        prompt = template(session.value.template, { prompt: '', history: historyText() }).trimRight();
+        [name, currentMessage] = transcript.pop();
+        currentMessage = currentMessage.trimRight();
+      } else {
+        // Send
+        transcriptUpdate([...session.value.transcript, ["{{user}}", msg]]);
+        prompt = template(session.value.template, { message: msg, history: historyText() });
+      }
+      console.log(prompt);
+
+      const history = session.value.transcript;
+      transcriptUpdate([...history, [name, currentMessage]]);
+
+      const llamaParams = params.value;
+
+      for await (const chunk of llama(prompt, llamaParams, { controller: controller.value })) {
+        const data = chunk.data;
+        currentMessage += data.content;
+
+        // remove leading whitespace
+        currentMessage = currentMessage.replace(/^\s+/, "");
+
+        transcriptUpdate([...history, [name, currentMessage]]);
+
+        if (data.stop) {
+          console.log("Completion finished: '", currentMessage, "', summary: ", data);
+        }
+
+        if (data.timings) {
+          llamaStats.value = data.timings;
+        }
+      }
+
+      controller.value = null;
+    };
+
+    function MessageInput() {
+      const message = useSignal("");
+
+      const stop = (e) => {
+        e.preventDefault();
+        if (controller.value) {
+          controller.value.abort();
+          controller.value = null;
+        }
+        const transcript = session.value.transcript;
+        if (transcript.length > 0 && transcript.at(-1)[1].length === 0) {
+          transcript.pop();
+          transcriptUpdate(transcript);
+        }
+      };
+
+      const clear = (e) => {
+        e.preventDefault();
+        // if (confirm('Clear all history?')) {
+        transcriptUpdate([]);
+      };
+
+      const copyHistory = async (e) => {
+        e.preventDefault();
+        const transcript = session.value.transcript;
+        await navigator.clipboard.writeText(JSON.stringify(transcript, null, 2));
+      };
+
+      const copyText = async (e) => {
+        e.preventDefault();
+        const transcript = session.value.transcript;
+        const content = template(session.value.template, { prompt: '', history: historyText() }).trimRight();
+        await navigator.clipboard.writeText(content);
+      };
+
+      const loadHistory = (e) => {
+        e.preventDefault();
+        const newTranscrpit = prompt('Paste chat history JSON here:');
+        if (newTranscrpit != null) {
+          transcriptUpdate(JSON.parse(newTranscrpit));
+        }
+      };
+
+      const copyLast = async (e) => {
+        e.preventDefault();
+        const transcript = session.value.transcript;
+        if (transcript.length === 0) {
+          return;
+        }
+        const last = transcript.at(-1)[1];
+        await navigator.clipboard.writeText(last);
+      };
+
+      const removeLast = (e) => {
+        e.preventDefault();
+        // if (confirm('Remove the last message?')) {
+        const transcript = session.value.transcript;
+        transcript.pop();
+        transcriptUpdate(transcript);
+      };
+
+      const editLast = (e) => {
+        e.preventDefault();
+        const transcript = session.value.transcript;
+        const last = transcript.pop();
+        if (last != null) {
+          message.value = last[1]
+          transcriptUpdate(transcript);
+          document.querySelector('#message-input').focus();
+        }
+      };
+
+      const append = (e) => {
+        e.preventDefault();
+        const transcript = session.value.transcript;
+        const op_role = transcript.length === 0 ? '{{char}}' : transcript.at(-1)[0];
+        const role = op_role === '{{char}}' ? '{{user}}' : '{{char}}';
+        transcript.push([role, message.value]);
+        transcriptUpdate(transcript);
+        message.value = '';
+      };
+
+      const countTokens = async (e) => {
+        e.preventDefault();
+        const content = template(session.value.template, { prompt: '', history: historyText() }).trimRight();
+        const tokens = await tokenize(content);
+        alert(`There are ${tokens.length} tokens`);
+      }
+
+      const regenerate = (e) => {
+        e.preventDefault();
+        const transcript = session.value.transcript;
+        const idx = transcript.findLastIndex(el => el[0] === '{{user}}');
+        if (idx === -1) {
+          return;
+        }
+        const lastPrompt = transcript[idx];
+        transcript.splice(idx);
+        transcriptUpdate(transcript);
+        chat(lastPrompt[1]);
+      };
+
+      const submit = (e) => {
+        stop(e);
+        chat(message.value);
+        message.value = "";
+      };
+
+      const enterSubmits = (event) => {
+        if ('ontouchstart' in document.documentElement) {
+          return;
+        }
+        if (event.which === 13 && !event.shiftKey) {
+          submit(event);
+        }
+      };
+
+      return html`
+        <form onsubmit=${submit}>
+          <div>
+            <textarea id="message-input" type="text" rows="3" onkeypress=${enterSubmits} value="${message}" oninput=${(e) => message.value = e.target.value} placeholder="Say something..."/>
+          </div>
+          <div class="buttons">
+            <div class="buttons-row">
+              <button onclick=${clear} disabled=${generating.value || !chatStarted.value}>Clear</button>
+              <button onclick=${regenerate} disabled=${generating.value || !chatStarted.value}>Regenerate</button>
+              <button onclick=${stop} disabled=${!generating.value}>Stop</button>
+              <button type="submit" disabled=${generating.value || !chatStarted.value && message.value.length === 0}>${message.value.length > 0 ? 'Send' : 'Continue'}</button>
+            </div>
+
+            <div class="buttons-row">
+              <button onclick=${removeLast} disabled=${generating.value || !chatStarted.value}>Remove Last</button>
+              <button onclick=${copyLast} disabled=${generating.value || !chatStarted.value}>Copy Last</button>
+              <button onclick=${editLast} disabled=${generating.value || !chatStarted.value}>Edit Last</button>
+              <button onclick=${append} disabled=${generating.value || message.value.length === 0}>Append</button>
+            </div>
+
+            <div class="buttons-row">
+              <button onclick=${loadHistory} disabled=${generating.value}>Load History</button>
+              <button onclick=${copyHistory} disabled=${!chatStarted.value}>Copy History</button>
+              <button onclick=${countTokens} disabled=${generating.value || !chatStarted.value}>Count Tokens</button>
+            </div>
+          </div>
+        </form>
+      `;
+    }
+
+    const ChatLog = (props) => {
+      const messages = session.value.transcript;
+      const container = useRef(null);
+
+      useEffect(() => {
+        // scroll to bottom (if needed)
+        const parent = container.current.parentElement;
+        if (parent && parent.scrollHeight <= parent.scrollTop + parent.offsetHeight + 300) {
+          parent.scrollTo(0, parent.scrollHeight);
+        }
+      }, [messages]);
+
+      const chatLine = ([user, msg], idx) => {
+        let cls = user === '{{user}}' ? 'user' : 'bot';
+        if (generating.value && idx === messages.length - 1) {
+          cls += ' generating';
+        }
+        return html`<p key=${idx} class="msg ${cls}"><${Markdownish} text=${msg} /></p>`;
+      };
+
+      return html`
+        <section id="chat" ref=${container}>
+          ${messages.flatMap(chatLine)}
+        </section>`;
+    };
+
+    const ConfigForm = (props) => {
+      const updateSession = (el) => session.value = { ...session.value, [el.target.name]: el.target.value };
+      const updateParams = (el) => params.value = { ...params.value, [el.target.name]: el.target.value };
+      const updateParamsFloat = (el) => params.value = { ...params.value, [el.target.name]: parseFloat(el.target.value) };
+      const updateParamsInt = (el) => params.value = { ...params.value, [el.target.name]: Math.floor(parseFloat(el.target.value)) };
+      const updateParamsBool = (el) => params.value = { ...params.value, [el.target.name]: el.target.checked };
+      const updatePreset = (el) => session.value = { ...session.value, ...(presets.value[el.target.value] ?? {}) };
+
+      const grammarJsonSchemaPropOrder = signal('')
+      const updateGrammarJsonSchemaPropOrder = (el) => grammarJsonSchemaPropOrder.value = el.target.value
+      const convertJSONSchemaGrammar = () => {
+        try {
+          const schema = JSON.parse(params.value.grammar)
+          const converter = new SchemaConverter(
+            grammarJsonSchemaPropOrder.value
+              .split(',')
+              .reduce((acc, cur, i) => ({...acc, [cur.trim()]: i}), {})
+          )
+          converter.visit(schema, '')
+          params.value = {
+            ...params.value,
+            grammar: converter.formatGrammar(),
+          }
+        } catch (e) {
+          alert(`Convert failed: ${e.message}`)
+        }
+      }
+
+      const FloatField = ({label, max, min, name, step, value}) => {
+        return html`
+          <div>
+            <label for="${name}">${label}</label>
+            <input type="range" id="${name}" min="${min}" max="${max}" step="${step}" name="${name}" value="${value}" oninput=${updateParamsFloat} />
+            <span>${value}</span>
+          </div>
+        `;
+      };
+
+      const IntField = ({label, max, min, name, value}) => {
+        return html`
+          <div>
+            <label for="${name}">${label}</label>
+            <input type="range" id="${name}" min="${min}" max="${max}" name="${name}" value="${value}" oninput=${updateParamsInt} />
+            <span>${value}</span>
+          </div>
+        `;
+      };
+
+      const BoolField = ({label, name, value}) => {
+        return html`
+          <div>
+            <label><input type="checkbox" id="${name}" name="${name}" value="${value}" oninput=${updateParamsBool} />${label}</label>
+          </div>
+        `;
+      }
+
+      return html`
+        <form>
+          <fieldset>
+            <div>
+              <label for="preset">Preset</label>
+              <select name="preset" onchange=${updatePreset}>
+                ${Object.keys(presets.value).map(name => html`<option value="${name}">${name}</option>`)}
+              </select>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <div>
+              <label for="prompt">Prompt</label>
+              <textarea type="text" name="prompt" value="${session.value.prompt}" rows=2 oninput=${updateSession}/>
+            </div>
+          </fieldset>
+
+          <fieldset class="two">
+            <div>
+              <label for="user">User name</label>
+              <input type="text" name="user" value="${session.value.user}" oninput=${updateSession} />
+            </div>
+
+            <div>
+              <label for="bot">Bot name</label>
+              <input type="text" name="char" value="${session.value.char}" oninput=${updateSession} />
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <div>
+              <label for="template">Prompt template</label>
+              <textarea id="template" name="template" value="${session.value.template}" rows=2 oninput=${updateSession}/>
+            </div>
+
+            <div>
+              <label for="template">Chat history template</label>
+              <textarea id="template" name="historyTemplate" value="${session.value.historyTemplate}" rows=2 oninput=${updateSession}/>
+            </div>
+
+            <div>
+              <label for="template">Grammar</label>
+              <textarea id="grammar" name="grammar" placeholder="Use gbnf or JSON Schema+convert" value="${params.value.grammar}" rows=4 oninput=${updateParams}/>
+              <input type="text" name="prop-order" placeholder="order: prop1,prop2,prop3" oninput=${updateGrammarJsonSchemaPropOrder} />
+              <button type="button" onclick=${convertJSONSchemaGrammar}>Convert JSON Schema</button>
+            </div>
+          </fieldset>
+
+          <fieldset class="two">
+            ${IntField({label: "Predictions", max: 2048, min: -1, name: "n_predict", value: params.value.n_predict})}
+            ${FloatField({label: "Temperature", max: 1.5, min: 0.0, name: "temperature", step: 0.01, value: params.value.temperature})}
+            ${FloatField({label: "Penalize repeat sequence", max: 2.0, min: 0.0, name: "repeat_penalty", step: 0.01, value: params.value.repeat_penalty})}
+            ${IntField({label: "Consider N tokens for penalize", max: 2048, min: 0, name: "repeat_last_n", value: params.value.repeat_last_n})}
+            ${IntField({label: "Top-K sampling", max: 100, min: -1, name: "top_k", value: params.value.top_k})}
+            ${FloatField({label: "Top-P sampling", max: 1.0, min: 0.0, name: "top_p", step: 0.01, value: params.value.top_p})}
+            ${BoolField({label: "Penalize newline tokens", name: "penalize_nl", value: params.value.penalize_nl})}
+          </fieldset>
+          <details>
+            <summary>More options</summary>
+            <fieldset class="two">
+              ${FloatField({label: "TFS-Z", max: 1.0, min: 0.0, name: "tfs_z", step: 0.01, value: params.value.tfs_z})}
+              ${FloatField({label: "Typical P", max: 1.0, min: 0.0, name: "typical_p", step: 0.01, value: params.value.typical_p})}
+              ${FloatField({label: "Presence penalty", max: 1.0, min: 0.0, name: "presence_penalty", step: 0.01, value: params.value.presence_penalty})}
+              ${FloatField({label: "Frequency penalty", max: 1.0, min: 0.0, name: "frequency_penalty", step: 0.01, value: params.value.frequency_penalty})}
+            </fieldset>
+            <hr />
+            <fieldset class="three">
+              <div>
+                <label><input type="radio" name="mirostat" value="0" checked=${params.value.mirostat == 0} oninput=${updateParamsInt} /> no Mirostat</label>
+                <label><input type="radio" name="mirostat" value="1" checked=${params.value.mirostat == 1} oninput=${updateParamsInt} /> Mirostat v1</label>
+                <label><input type="radio" name="mirostat" value="2" checked=${params.value.mirostat == 2} oninput=${updateParamsInt} /> Mirostat v2</label>
+              </div>
+              ${FloatField({label: "Mirostat tau", max: 10.0, min: 0.0, name: "mirostat_tau", step: 0.01, value: params.value.mirostat_tau})}
+              ${FloatField({label: "Mirostat eta", max: 1.0, min: 0.0, name: "mirostat_eta", step: 0.01, value: params.value.mirostat_eta})}
+            </fieldset>
+          </details>
+        </form>
+      `;
+    };
+    // poor mans markdown replacement
+    const Markdownish = (params) => {
+      const md = params.text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/^#{1,6} (.*)$/gim, '<h3>$1</h3>')
+        // .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        // .replace(/__(.*?)__/g, '<strong>$1</strong>')
+        // .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        // .replace(/_(.*?)_/g, '<em>$1</em>')
+        .replace(/```.*?\n([\s\S]*?)(```|$)/g, '<pre><code>$1</code></pre>')
+        .replace(/`(.+?)`/g, '<code>$1</code>')
+        .replace(/\n/gim, '<br />');
+      return html`<span dangerouslySetInnerHTML=${{ __html: md }} />`;
+    };
+
+    const ModelGenerationInfo = (params) => {
+      if (!llamaStats.value) {
+        return html`<span/>`;
+      }
+      const {
+        prompt_n,
+        prompt_ms,
+        prompt_per_second,
+        predicted_n,
+        predicted_ms,
+        predicted_per_second,
+      } = llamaStats.value;
+      const prompt_s = prompt_ms ? (prompt_ms / 1e3).toFixed(2) : '?';
+      const prompt_per_sec = prompt_per_second ? prompt_per_second.toFixed(2) : '?';
+      return html`
+        <span>prompt: ${prompt_n} in ${prompt_s}s (${prompt_per_sec} tps), gen: ${predicted_n} in ${(predicted_ms / 1e3).toFixed(2)}s (${predicted_per_second.toFixed(2)} tps)</span>
+      `;
+    };
+
+    function App(props) {
+      return html`
+        <div id="container">
+          <header>
+            <!-- <h1>llama.cpp</h1> -->
+          </header>
+
+          <main id="content">
+            <${chatStarted.value ? ChatLog : ConfigForm} />
+          </main>
+
+          <section id="write">
+            <${MessageInput} />
+          </section>
+
+          <footer>
+            <p><${ModelGenerationInfo} /></p>
+            <!-- <p>Powered by <a href="https://github.com/ggerganov/llama.cpp">llama.cpp</a> and <a href="https://ggml.ai">ggml.ai</a>.</p> -->
+          </footer>
+        </div>
+      `;
+    }
+
+    render(h(App), document.body);
+  </script>
+</head>
+
+<body>
+</body>
+
+</html>
