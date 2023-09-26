@@ -5,12 +5,5 @@ AnyQt
 PyQt5
 PyQt5-sip
 fastapi
-gradio
-httpx
-loguru
-numpy
-pydantic
 async-timeout
-PyYAML
-six
 uvicorn
