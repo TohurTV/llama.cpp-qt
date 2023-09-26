@@ -319,8 +319,7 @@ class LlamaServerWrapper(QMainWindow):
             "--ctx-size", ctx_size,
             "--batch-size", bth_size,
             "--host", host,  # Add host argument
-            "--port", port,  # Add port argument
-            "--path", "./public"
+            "--port", port  # Add port argument
         ]
         if self.mlock_checkbox.isChecked():
             cmd.append("--mlock")
