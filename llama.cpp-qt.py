@@ -400,29 +400,6 @@ class LlamaServerWrapper(QMainWindow):
                 break
             self.on_output_received(line)
 
-        # Start the api_like_OAI.py script in a separate thread with a delay
-        if self.oai_checkbox.isChecked():
-            chatui_thread = threading.Thread(target=self.start_chatui_script_with_delay)
-            chatui_thread.start()
-
-    def start_chatui_script_with_delay(self):
-        # Delay for a specified time (in seconds) before starting the API script
-        chatui_delay = 12  # Set the delay time in seconds (adjust as needed)
-        time.sleep(chatui_delay)
-        host = self.host_entry.text()
-        port = str(self.port_entry.value())
-        oaiport = str(self.oaiport_entry.value())
-        # Start the api_like_OAI.py script as a separate process
-        self.chatui_process = subprocess.Popen(
-            ["python3", "chatui.py"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT, universal_newlines=True)
-
-        while True:
-            line = self.chatui_process.stdout.readline()
-            if not line:
-                break
-            self.on_output_received(line)
     def on_server_started(self):
         print("Server started")
 
@@ -431,9 +408,6 @@ class LlamaServerWrapper(QMainWindow):
         if self.api_process:
             self.api_process.terminate()
             self.api_process.wait()
-        if self.chatui_process:
-            self.chatui_process.terminate()
-            self.chatui_process.wait()
         self.server_runner_thread.join()
         self.server_runner_thread = None
 
