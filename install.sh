@@ -12,6 +12,8 @@ sudo -v
 # Check if llama.cpp-qt.py exists in /opt/llama.cpp-qt
 if [ -f "/opt/llama.cpp-qt/llama.cpp-qt.py" ]; then
     sudo rm -r -f -d /opt/llama.cpp-qt
+    sudo rm "$DESKTOP_DIR/llama-cpp-qt.desktop"
+    sudo rm "$BIN_DIR/llama.cpp-qt"
 fi
 
 # Create the installation directory

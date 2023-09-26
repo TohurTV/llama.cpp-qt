@@ -386,9 +386,10 @@ class LlamaServerWrapper(QMainWindow):
         api_delay = 10  # Set the delay time in seconds (adjust as needed)
         time.sleep(api_delay)
         host = self.host_entry.text()
+        port = str(self.port_entry.value())
         oaiport = str(self.oaiport_entry.value())
         # Start the api_like_OAI.py script as a separate process
-        self.api_process = subprocess.Popen(["python3", "api_like_OAI.py", "--host", host, "--port", oaiport],
+        self.api_process = subprocess.Popen(["python3", "api_like_OAI.py", "--host", host, "--port", oaiport, "--llama-api", "http://" + host + ":" + port],
                                             stdout=subprocess.PIPE,
                                             stderr=subprocess.STDOUT, universal_newlines=True)
 
