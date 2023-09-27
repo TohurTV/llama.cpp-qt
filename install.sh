@@ -12,6 +12,7 @@ sudo -v
 # Check if llama.cpp-qt.py exists in /opt/llama.cpp-qt
 if [ -f "/opt/llama.cpp-qt/llama.cpp-qt.py" ]; then
     sudo rm -r -f -d /opt/llama.cpp-qt
+    sudo rm -r -f -d "$HOME/.llama.cpp-qt"
     sudo rm "$DESKTOP_DIR/llama-cpp-qt.desktop"
     sudo rm "$BIN_DIR/llama.cpp-qt"
 fi
@@ -38,10 +39,9 @@ sudo chmod 755 "$INSTALL_DIR/llama.cpp-qt.py"
 sudo chmod 755 "$BIN_DIR/llama.cpp-qt"
 
 # Setup proper python venv
-cd $INSTALL_DIR
-sudo python3 -m venv --system-site-packages "venv"
-source "./venv/bin/activate"
-pip install -r requirements.txt
+python3 -m venv --system-site-packages "$HOME/.llama.cpp-qt"
+source "$HOME/.llama.cpp-qt/bin/activate"
+pip install -r $INSTALL_DIR/requirements.txt
 deactivate
 
 # Create a desktop shortcut for llama.cpp-qt
