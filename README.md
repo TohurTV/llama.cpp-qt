@@ -68,7 +68,7 @@ Rocm build instructions coming soon for windows.
 4. Extract the release build and copy server.exe and all of the .dlls to the llama.cpp-qt folder.
 
 
-5. Run the start.bat file to start the llama.cppqt GUI.
+5. Run the start.bat file to start the llama.cpp-qt GUI.
 
 ## Systemwide installation
 

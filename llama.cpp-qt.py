@@ -323,7 +323,7 @@ class LlamaServerWrapper(QMainWindow):
                 "--batch-size", bth_size,
                 "--host", host,
                 "--port", port,
-                "--path", "./public"
+                "--path", "public"
             ]
         else:
             # On Linux and other Unix-like OSes, execute ./server
