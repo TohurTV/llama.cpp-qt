@@ -15,7 +15,7 @@ curl -LJO https://github.com/%REPO%/releases/%TAG%/download/llama-b1280-bin-win-
 
 :: Extract the downloaded release zip file using Windows built-in zip utility
 echo Extracting files...
-Call :UnZipFile %TEMP_DIR% llama-b1280-bin-win-cublas-cu11.7.1-x64.zip
+powershell -command "Expand-Archive -Path 'llama-b1280-bin-win-cublas-cu11.7.1-x64.zip' -DestinationPath '%TEMP_DIR%'"
 
 :: Copy DLL files and server.exe to the current directory
 echo Copying files to the current directory...
