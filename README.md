@@ -60,12 +60,12 @@ To run the LLama.cpp-qt Wrapper, follow these steps:
    cd llama.cpp-qt
    ```
 
-3. Download the lastest release build from [Llama.cpp Releases](https://github.com/ggerganov/llama.cpp/releases).
+3. Download the lastest release build from [Llama.cpp Releases](https://github.com/ggerganov/llama.cpp/releases) or use the included bat files download-llama.cpp-{version).bat.
 Openblas for running on cpu, Cublas for running on Nvidia GPUs, and clblast for other GPUs.
 Rocm build instructions coming soon for windows.
 
 
-4. Extract the release build and copy server.exe and all of the .dlls to the llama.cpp-qt folder.
+4. If you downloaded the release from llama.cpp's github Extract the release build and copy server.exe and all of the .dlls to the llama.cpp-qt folder if you used one of the bat files proceed to next step.
 
 
 5. Run the start.bat file to start the llama.cpp-qt GUI.
