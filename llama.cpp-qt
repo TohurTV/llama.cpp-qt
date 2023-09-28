@@ -23,7 +23,7 @@ fi
 
 # Check if llama.cpp-qt.py exists in /opt/llama.cpp-qt
 if [ -f "/opt/llama.cpp-qt/llama.cpp-qt.py" ]; then
-    source "$INSTALL_DIR/.llama.cpp-qt/bin/activate"
+    source "$HOME/.llama.cpp-qt/bin/activate"
     python3 /opt/llama.cpp-qt/llama.cpp-qt.py "$@"
     exit $?
 fi
