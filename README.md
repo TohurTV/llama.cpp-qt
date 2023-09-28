@@ -15,7 +15,7 @@ Before you begin, ensure you have met the following requirements:
 - **llama.cpp requirements:** You can learn the requirements for CPU,Cuda, or AMD rocm builds
   here, [Llama.cpp Github](https://github.com/ggerganov/llama.cpp).
 
-## Build
+## Build Linux
 
 To build and run the LLama.cpp-qt Wrapper, follow these steps:
 
@@ -46,3 +46,30 @@ To install systemwide after running the build script run:
 ```sh
 sh ./install.sh
 ```
+
+## Windows Setup
+
+To run the LLama.cpp-qt Wrapper, follow these steps:
+
+1. Clone this repository to your local machine:
+   ```sh
+   git clone https://github.com/TohurTV/llama.cpp-qt.git
+   ```
+2. Change your current directory to the cloned repository:
+   ```sh
+   cd llama.cpp-qt
+   ```
+
+3. Download the lastest release build from [Llama.cpp Releases](https://github.com/ggerganov/llama.cpp/releases).
+Openblas for running on cpu, Cublas for running on Nvidia GPUs, and clblast for other GPUs.
+Rocm build instructions coming soon for windows.
+
+
+4. Extract the release build and copy server.exe and all of the .dlls to the llama.cpp-qt folder.
+
+
+5. Run the start.bat file to start the llama.cppqt GUI.
+
+## Systemwide installation
+
+Windows installers coming soon.
