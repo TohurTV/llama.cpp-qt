@@ -5,6 +5,15 @@
 Llama.cpp-qt is a Python-based graphical wrapper for the LLama.cpp server, providing a user-friendly interface
 for configuring and running the server. LLama.cpp is a lightweight implementation of GPT-like models.
 
+## Benifits over other LLama.cpp solutions
+Most other interfaces for llama.cpp run exclusively through python, meaning  its the llama.cpp converted to
+python in some form or another and depending on your hardware there is overhead to running directly in python.
+python is slower then C++, C++ is Low-level programming language meaning its pretty close to the hardware, python is
+a high level programming language which is fine for GUIs (llama.cpp-qt) but for applications the require high performance
+you want to be as low level as you can be. llama.cpp-qt is a wrapper for llama.cpp meaning it runs llama.cpp directly and is 
+faster then other llama.cpp solutions. I personally get about double the tokens persecond compared to Text Gen UI, Koboldcpp and llama-cpp-python. 
+llama.cpp-qt is also cross platform meaning it runs on Linux and Windows. (macos support coming soon).
+
 ## Requirements
 
 Before you begin, ensure you have met the following requirements:
