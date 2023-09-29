@@ -393,7 +393,7 @@ class LlamaServerWrapper(QMainWindow):
         self.output_text.show()
         self.stop_button.show()
 
-        # Start the api_like_OAI.py script in a separate thread with a delay
+        # Start the oai_api.py script in a separate thread with a delay
         if self.oai_checkbox.isChecked():
             api_thread = threading.Thread(target=self.start_api_script_with_delay)
             api_thread.start()
@@ -405,16 +405,32 @@ class LlamaServerWrapper(QMainWindow):
         host = self.host_entry.text()
         port = str(self.port_entry.value())
         oaiport = str(self.oaiport_entry.value())
-        # Start the api_like_OAI.py script as a separate process
+        # Start the oai_api.py script as a separate process
         if platform.system() == "Windows":
-            self.api_process = subprocess.Popen(
-                ["python", "api_like_OAI.py", "--host", host, "--port", oaiport, "--llama-api",
-                 "http://" + host + ":" + port],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT, universal_newlines=True)
+            is_pyinstaller_bundle = getattr(sys, 'frozen', False) and platform.system() == 'Windows'
+
+            if is_pyinstaller_bundle:
+                # If it's a PyInstaller bundle on Windows, use sys.executable
+                venv_python = sys.executable
+                venv_activate = os.path.join("venv", "Scripts", "activate.bat")
+                # Construct the command to activate the venv and run the script
+                command = [venv_activate, "&&", venv_python, "oai_api.py", "--host", host, "--port", oaiport, "--llama-api",
+                           "http://" + host + ":" + port]
+            else:
+                # If it's not a bundle or not on Windows, construct the path to the venv activate script
+                venv_activate = os.path.join("venv", "Scripts", "activate.bat")
+
+                # Construct the command to activate the venv and run the script
+                command = [venv_activate, "&&", "python", "oai_api.py", "--host", host, "--port", oaiport, "--llama-api",
+                           "http://" + host + ":" + port]
+
+                self.api_process = subprocess.Popen(
+                    command,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT, universal_newlines=True)
         else:
             self.api_process = subprocess.Popen(
-                ["python3", "api_like_OAI.py", "--host", host, "--port", oaiport, "--llama-api",
+                ["python3", "oai_api.py", "--host", host, "--port", oaiport, "--llama-api",
                  "http://" + host + ":" + port],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT, universal_newlines=True)

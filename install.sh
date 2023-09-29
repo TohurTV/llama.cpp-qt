@@ -22,9 +22,9 @@ echo "Creating installation directory..."
 sudo mkdir -p "$INSTALL_DIR"
 sudo chmod 755 "$INSTALL_DIR"
 
-# Copy api_like_OAI.py, server, and llama.cpp-qt.py to the installation directory
+# Copy oai_api.py, server, and llama.cpp-qt.py to the installation directory
 echo "Copying files to $INSTALL_DIR..."
-sudo cp api_like_OAI.py "$INSTALL_DIR"
+sudo cp oai_api.py "$INSTALL_DIR"
 sudo cp server "$INSTALL_DIR"
 sudo cp llama.cpp-qt.py "$INSTALL_DIR"
 sudo cp llama.png "$INSTALL_DIR"
