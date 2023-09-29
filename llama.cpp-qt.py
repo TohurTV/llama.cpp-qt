@@ -417,7 +417,7 @@ class LlamaServerWrapper(QMainWindow):
                 command = [venv_activate, "&&", venv_python, "oai_api.py", "--host", host, "--port", oaiport, "--llama-api",
                            "http://" + host + ":" + port]
             else:
-                # If it's not a bundle or not on Windows, construct the path to the venv activate script
+                # If it's not a bundle but on Windows, construct the path to the venv activate script
                 venv_activate = os.path.join("venv", "Scripts", "activate.bat")
 
                 # Construct the command to activate the venv and run the script
@@ -429,6 +429,7 @@ class LlamaServerWrapper(QMainWindow):
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT, universal_newlines=True)
         else:
+            # If it's not a bundle and not on Windows, run the script with the python3 binary
             self.api_process = subprocess.Popen(
                 ["python3", "oai_api.py", "--host", host, "--port", oaiport, "--llama-api",
                  "http://" + host + ":" + port],
