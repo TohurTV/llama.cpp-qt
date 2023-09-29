@@ -23,9 +23,16 @@ fi
 
 # Check if llama.cpp-qt.py exists in /opt/llama.cpp-qt
 if [ -f "/opt/llama.cpp-qt/llama.cpp-qt.py" ]; then
+    if [ ! -d "$HOME/.llama.cpp-qt" ]; then
+        # Create a Python virtual environment
+        python3 -m venv --system-site-packages "$HOME/.llama.cpp-qt"
+        source "$HOME/.llama.cpp-qt/bin/activate"
+        pip install -r /opt/llama.cpp-qt/requirements.txt
+        deactivate
+    fi
     source "$HOME/.llama.cpp-qt/bin/activate"
     python3 /opt/llama.cpp-qt/llama.cpp-qt.py "$@"
-    exit $?
+    deactivate
 fi
 
 # If llama.cpp-qt.py is not found, display an error message
