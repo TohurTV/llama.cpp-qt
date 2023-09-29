@@ -33,7 +33,7 @@ sudo cp -r public "$INSTALL_DIR/public"
 sudo cp llama.cpp-qt "$BIN_DIR"
 
 # Set proper permissions
-sudo chmod 755 "$INSTALL_DIR/api_like_OAI.py"
+sudo chmod 755 "$INSTALL_DIR/oai_api.py"
 sudo chmod 755 "$INSTALL_DIR/server"
 sudo chmod 755 "$INSTALL_DIR/llama.cpp-qt.py"
 sudo chmod 755 "$BIN_DIR/llama.cpp-qt"
