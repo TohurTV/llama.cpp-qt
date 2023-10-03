@@ -430,8 +430,20 @@ class LlamaServerWrapper(QMainWindow):
                     stderr=subprocess.STDOUT, universal_newlines=True)
         else:
             # If it's not a bundle and not on Windows, run the script with the python3 binary
+            # For non-Windows platforms, check for venv in the user's home directory
+            home_venv = os.path.join(os.path.expanduser("~"), ".llama.cpp-qt")
+
+            if os.path.exists(home_venv):
+                venv_python = os.path.join(home_venv, "bin", "python3")
+            else:
+                # If venv doesn't exist in the home directory, check for venv in the current directory
+                if os.path.exists(os.path.join(os.getcwd(), "venv")):
+                    venv_python = os.path.join(os.getcwd(), "venv", "bin", "python3")
+                else:
+                    # If venv doesn't exist in the current directory, use the system's Python
+                    venv_python = "python3"
             self.api_process = subprocess.Popen(
-                ["python3", "oai_api.py", "--host", host, "--port", oaiport, "--llama-api",
+                [venv_python, "oai_api.py", "--host", host, "--port", oaiport, "--llama-api",
                  "http://" + host + ":" + port],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT, universal_newlines=True)
