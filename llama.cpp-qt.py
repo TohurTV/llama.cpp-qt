@@ -414,14 +414,16 @@ class LlamaServerWrapper(QMainWindow):
                 venv_python = sys.executable
                 venv_activate = os.path.join("venv", "Scripts", "activate.bat")
                 # Construct the command to activate the venv and run the script
-                command = [venv_activate, "&&", venv_python, "oai_api.py", "--host", host, "--port", oaiport, "--llama-api",
+                command = [venv_activate, "&&", venv_python, "oai_api.py", "--host", host, "--port", oaiport,
+                           "--llama-api",
                            "http://" + host + ":" + port]
             else:
                 # If it's not a bundle but on Windows, construct the path to the venv activate script
                 venv_activate = os.path.join("venv", "Scripts", "activate.bat")
 
                 # Construct the command to activate the venv and run the script
-                command = [venv_activate, "&&", "python", "oai_api.py", "--host", host, "--port", oaiport, "--llama-api",
+                command = [venv_activate, "&&", "python", "oai_api.py", "--host", host, "--port", oaiport,
+                           "--llama-api",
                            "http://" + host + ":" + port]
 
                 self.api_process = subprocess.Popen(
@@ -430,17 +432,18 @@ class LlamaServerWrapper(QMainWindow):
                     stderr=subprocess.STDOUT, universal_newlines=True)
         else:
             # If it's not a bundle and not on Windows, run the script with the python3 binary
-            # For non-Windows platforms, check for venv in the user's home directory
-            home_venv = os.path.join(os.path.expanduser("~"), ".llama.cpp-qt")
+            # check for venv in the current directory
+            if os.path.exists(os.path.join(os.getcwd(), "venv")):
+                venv_python = os.path.join(os.getcwd(), "venv", "bin", "python3")
 
-            if os.path.exists(home_venv):
-                venv_python = os.path.join(home_venv, "bin", "python3")
             else:
-                # If venv doesn't exist in the home directory, check for venv in the current directory
-                if os.path.exists(os.path.join(os.getcwd(), "venv")):
-                    venv_python = os.path.join(os.getcwd(), "venv", "bin", "python3")
+                # If venv doesn't exist in current directory, check for venv in the user's home directory
+                home_venv = os.path.join(os.path.expanduser("~"), ".llama.cpp-qt")
+
+                if os.path.exists(home_venv):
+                    venv_python = os.path.join(home_venv, "bin", "python3")
                 else:
-                    # If venv doesn't exist in the current directory, use the system's Python
+                    # If venv doesn't exist in the current or home directory, use the system's Python
                     venv_python = "python3"
             self.api_process = subprocess.Popen(
                 [venv_python, "oai_api.py", "--host", host, "--port", oaiport, "--llama-api",

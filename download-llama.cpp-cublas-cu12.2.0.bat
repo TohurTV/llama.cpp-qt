@@ -3,7 +3,7 @@ setlocal enabledelayedexpansion
 
 :: Set the GitHub repository and release tag
 set REPO=ggerganov/llama.cpp
-set TAG=b1280
+set TAG=b1321
 
 :: Create a temporary directory
 set TEMP_DIR=%TEMP%\llama_cpp_temp
